@@ -1,4 +1,4 @@
-def rec_search(arr, t, start, end):
+def binary_search(arr, t, start, end):
     if start > end:
         return -1
     pos = (start + end) // 2
@@ -10,7 +10,7 @@ def rec_search(arr, t, start, end):
         return rec_search(arr, t, pos + 1, end)
 
 
-def binary_search(arr, t):
+def binary_search2(arr, t): # with only 2 variables
     if not arr:
         return -1
     pos = len(arr) // 2
@@ -27,5 +27,5 @@ def binary_search(arr, t):
 
 if __name__ == "__main__":
     x = [1, 2, 3, 5, 6, 7, 8, 9, 10]
-    # print(rec_search(x, 7, 0, len(x) - 1))
-    print(binary_search(x, 10))
+    # print(binary_search(x, 7, 0, len(x) - 1))
+    print(binary_search2(x, 10))
