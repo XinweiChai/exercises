@@ -24,5 +24,8 @@ def rand_excel(fn):
         workbook.save("C:/Users/Administrator/Desktop/body_temperature/202003" + str(k).zfill(2) + ".xlsx")
 
 
+
+
+
 if __name__ == "__main__":
-	rand_excel("C:/Users/Administrator/Desktop/body_temperature/20200331.xlsx")
+	# rand_excel("C:/Users/Administrator/Desktop/body_temperature/20200331.xlsx")
