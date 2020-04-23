@@ -28,4 +28,4 @@ def rand_excel(fn):
 
 
 if __name__ == "__main__":
-	# rand_excel("C:/Users/Administrator/Desktop/body_temperature/20200331.xlsx")
+    rand_excel("C:/Users/Administrator/Desktop/body_temperature/20200331.xlsx")
