@@ -1,7 +1,7 @@
 from docx import Document
 import os
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Pt, Inches
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_LINE_SPACING
+from docx.shared import Pt
 from win32com import client as wc
 from docx.oxml.ns import qn
 
@@ -41,8 +41,8 @@ for i in os.listdir("files"):
                 run.font.name = u'楷体'
                 run._element.rPr.rFonts.set(qn('w:eastAsia'), u'楷体')
             else:
-                paragraph = doc_all.add_paragraph("    " + para.text.strip())
-                # paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-                # paragraph_format = paragraph.paragraph_format
-                # paragraph_format.first_line_indent = Inches(0.5)
+                paragraph = doc_all.add_paragraph(para.text.strip())
+                paragraph_format = paragraph.paragraph_format
+                paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+                paragraph_format.first_line_indent = Pt(21)
     doc_all.save(i + '.docx')
