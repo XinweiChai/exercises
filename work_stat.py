@@ -1,7 +1,7 @@
 import openpyxl
 from datetime import datetime
 
-holiday = [4, 5, 6, 11, 12, 18, 19]
+holiday = [4, 5, 6, 11, 12, 18, 19, 25]
 
 y_offset = 6
 
@@ -16,19 +16,22 @@ def work_statistics(fn):
         not_enough_count = 0
         absence = ""
         not_enough = ""
-        for j in range(days):
-            if j + 1 in holiday:
+        for j in range(1, days + 1):
+            if j in holiday:
                 continue
-            x = sheet.cell(i * 2 + y_offset, j + 1).value
+            x = sheet.cell(i * 2 + y_offset, j).value
             if not x or len(x) < 10:
                 absence_count += 1
-                absence += str(j + 1) + ' '
+                absence += str(j) + ' '
                 continue
             start = datetime.strptime(x[0:5], "%H:%M")
             end = datetime.strptime(x[-5:], "%H:%M")
-            if (end - start).seconds < 9 * 3600 - 6 * 60:
+            if (end - start).seconds < 3600:
+                absence_count += 1
+                absence += str(j) + ' '
+            elif (end - start).seconds < 9 * 3600 - 6 * 60:
                 not_enough_count += 1
-                not_enough += str(j + 1) + ' '
+                not_enough += str(j) + ' '
         sheet.cell(i * 2 + y_offset, days + 1, absence_count)
         sheet.cell(i * 2 + y_offset, days + 2, absence)
         sheet.cell(i * 2 + y_offset, days + 3, not_enough_count)
