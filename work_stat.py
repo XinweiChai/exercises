@@ -1,9 +1,9 @@
 import openpyxl
 from datetime import datetime
 
-holiday = [4, 5, 6, 11, 12, 18, 19, 25]
+holiday = [1, 2, 3, 4, 5, 10, 16, 17, 23, 24, 30, 31]
 
-y_offset = 6
+y_offset = 7
 
 
 def work_statistics(fn):
@@ -43,5 +43,11 @@ def work_statistics(fn):
     workbook.save("res.xlsx")
 
 
+def count_exceptions():
+    workbook = openpyxl.load_workbook("钉钉请假.xlsx")
+    x=1
+
+
 if __name__ == "__main__":
-    work_statistics("sample.xlsx")
+    # work_statistics("考勤机原始考勤.xlsx")
+    count_exceptions()
