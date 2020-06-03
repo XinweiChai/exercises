@@ -1,5 +1,6 @@
 import openpyxl
 from datetime import datetime
+import pandas as pd
 
 holiday = [1, 2, 3, 4, 5, 10, 16, 17, 23, 24, 30, 31]
 
@@ -49,11 +50,15 @@ def count_days(fn, workbook2):
     sheet2 = workbook2.worksheets[0]
     pos_header = 0
     pos_days = 0
+    pos_type = 0
+    pos_reason = 0
     for i in range(1, sheet1.max_column + 1):
         if sheet1.cell(1, i).value == "标题":
             pos_header = i
         elif "天数" in sheet1.cell(1, i).value:
             pos_days = i
+        elif "事由" in sheet1.cell(1, i).value:
+            pos_reason = i
         elif "请假类型" in sheet1.cell(1, i).value:
             pos_type = i
 
@@ -72,8 +77,13 @@ def count_days(fn, workbook2):
         name = sheet1.cell(i, pos_header).value
         name = name[:-5]
         days = float(sheet1.cell(i, pos_days).value)
+        reason = sheet1.cell(i, pos_reason).value
         for j in range(5, rows2 + 1):
             if sheet2.cell(j, 2).value == name:
+                if not sheet2.cell(j, 17).value:
+                    sheet2.cell(j, 17).value = reason + ";"
+                else:
+                    sheet2.cell(j, 17).value += reason + ";"
                 if not sheet2.cell(j, x_offset).value:
                     sheet2.cell(j, x_offset).value = days
                 else:
@@ -82,8 +92,25 @@ def count_days(fn, workbook2):
     return workbook2
 
 
-# def out_shift():
+def modify_res():
+    sheet = openpyxl.load_workbook("res.xlsx").worksheets[0]
+    df1 = pd.DataFrame(pd.read_excel("钉钉出差.xlsx"))
+    df2 = pd.DataFrame(pd.read_excel("钉钉外出.xlsx"))
+    df3 = pd.DataFrame(pd.read_excel("钉钉请假.xlsx"))
+    rows = (sheet.max_row - y_offset) // 2
+    for idx, i in df1.iterrows():
+        name = i["标题"][:-5]
+        begin_time = datetime.strptime(i["开始时间"], "%Y-%m-%d")
+        end_time = datetime.strptime(i["结束时间"], "%Y-%m-%d")
+        days = (end_time - begin_time).days + 1
+        # begin_time = datetime.strptime(i["开始时间"], "%Y-%m-%d %H-%M")
+        for j in range(rows):
+            if sheet.cell(j * 2 + y_offset - 1, 11).value == name:
+                y = 1
 
+    # sheet1 = openpyxl.load_workbook("钉钉出差.xlsx").worksheets[0]
+    # sheet2 = openpyxl.load_workbook("钉钉外出.xlsx").worksheets[0]
+    # sheet3 = openpyxl.load_workbook("钉钉请假.xlsx").worksheets[0]
 
 
 def count_exceptions():
@@ -96,3 +123,4 @@ def count_exceptions():
 if __name__ == "__main__":
     work_statistics("考勤机原始考勤.xlsx")
     count_exceptions()
+    # modify_res()
