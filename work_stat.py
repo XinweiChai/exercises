@@ -18,7 +18,7 @@ def work_statistics(fn):
         not_enough_count = 0
         absence = []
         not_enough = []
-        name = x = sheet.cell(i * 2 + y_offset - 1, 11).value
+        name = sheet.cell(i * 2 + y_offset - 1, 11).value
         for j in range(1, days + 1):
             if j in holiday:
                 continue
