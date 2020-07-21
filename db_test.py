@@ -1,5 +1,4 @@
 import pandas as pd
-import mysql.connector as ms
 import psycopg2
 
 x = pd.read_csv('test.csv', header=None)
