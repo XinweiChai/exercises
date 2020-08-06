@@ -41,12 +41,12 @@ for i in os.listdir("files"):
                 elif (count == 2 or count == 3) and len(temp) < 40:
                     if count == 2:
                         if "■" not in temp:
-                            x = re.split("\s+", temp)
+                            x = re.split(r"\s+", temp)
                             if len(x) < 2:
                                 continue
                             temp = " ".join(x[0:-1]) + " ■" + x[-1]
                         else:
-                            temp = re.sub("\s*■", " ■", temp)
+                            temp = re.sub(r"\s*■", " ■", temp)
                     if count == 3 and "□" not in temp:
                         temp = "□" + temp
                     paragraph = doc_all.add_paragraph()

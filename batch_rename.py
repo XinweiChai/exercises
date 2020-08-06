@@ -10,7 +10,7 @@ import pandas as pd
 def rename():
     for folder in os.listdir("data"):
         for filename in os.listdir("data/" + folder):
-            x = re.split('\.', filename)
+            x = re.split(r'\.', filename)
             x[0] = folder
             x = '.'.join(x)
             os.rename("data/" + folder + '/' + filename, "data/" + folder + '/' + x)
@@ -48,7 +48,7 @@ def trans_point_to_shp(folder, fn, idlng, idlat, delimiter=','):
 def batch_transfer():
     for folder in os.listdir("data"):
         for filename in os.listdir("data/" + folder):
-            x = re.split('\.', filename)
+            x = re.split(r'\.', filename)
             if x[1] == 'csv':
                 trans_point_to_shp('data/' + folder + '/', filename, 1, 0, delimiter=',')
                 break
@@ -71,7 +71,7 @@ def combine():
         w.field('lat', 'F', 10, 8)
         w.field('name', 'C', 100)
         w.field('address', 'C', 100)
-        w.field('pname', 'C', 10, 8)  # float
+        w.field('pname', 'C', 0, 8)  # float
         w.field('cityname', 'C', 10, 8)  # float
         w.field('business_area', 'C', 100)  # string, max-length
         w.field('type', 'C', 100)  # string, max-length

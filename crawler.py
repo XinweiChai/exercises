@@ -20,7 +20,7 @@ and they lived at the bottom of a well.</p>
 def get_html_text(url):
     try:
         r = requests.get(url, timeout=30)
-        r.raise_for_status() # 如果状态码不是200， 引发HTTPError异常
+        r.raise_for_status()  # 如果状态码不是200， 引发HTTPError异常
         r.encoding = r.apparent_encoding
         return r.text
     except:
@@ -35,6 +35,6 @@ if __name__ == '__main__':
     # print(soup.prettify())
     print(soup.name)
     print(type(soup.title))
-    x=soup.a
+    x = soup.a
     print(soup.a.name)
     print(soup.a.attrs)
