@@ -36,13 +36,13 @@ def wgs84_to_web_mercator(df, lon="lon", lat="lat"):
     return df
 
 
-def precondition(x):
-    # x[["WGS84_经度", "WGS84_纬度"]] = x.apply(
-    #     lambda row: wgs84_to_gcj02(row["WGS84_经度"], row["WGS84_纬度"]), axis=1)
-    # x[['x', 'y']] = x.apply(
-    #     lambda row: transform_series(row["WGS84_经度"], row["WGS84_纬度"]), axis=1)
-    x = wgs84_to_web_mercator(x, lon="lng", lat="lat")
-    x.to_csv("bike_after.csv", index=False)
+def precondition(df, lon='lng', lat='lat'):
+    df[[lon, lat]] = df.apply(
+        lambda row: wgs84_to_gcj02(row[lon], row[lat]), axis=1)
+    # df[['x', 'y']] = df.apply(
+    #     lambda row: transform_series(row[lon], row[lat]), axis=1)
+    df = wgs84_to_web_mercator(df, lon=lon, lat=lat)
+    return df
 
 
 if __name__ == '__main__':
@@ -50,34 +50,38 @@ if __name__ == '__main__':
     # fn = "restaurant_trans.csv"
     # fn = "resto.csv"
     # fn = "餐饮after.csv"
-    fn = "bike_after.csv"
-    x = pd.read_csv(fn, encoding='utf-8')
-    coord = x[['x', 'y']]
-    X = np.array(coord.values)
-    # #############################################################################
-    # Generate sample data
-    # centers = [[1, 1], [-1, -1], [1, -1]]
-    # X, labels_true = make_blobs(n_samples=30, centers=centers, cluster_std=0.4,
-    #                             random_state=0)
+    name = ['ordinary_company', 'IT_company', 'mall', 'supermarket']
+    for i in name:
+        fn = f"C:/Users/zby11/Downloads/poi/{i}_trans.csv"
+        # fn = "bike_after.csv"
+        x = pd.read_csv(fn)
+        coord = x[['x', 'y']]
+        X = np.array(coord.values)
+        # #############################################################################
+        # Generate sample data
+        # centers = [[1, 1], [-1, -1], [1, -1]]
+        # X, labels_true = make_blobs(n_samples=30, centers=centers, cluster_std=0.4,
+        #                             random_state=0)
 
-    # X = StandardScaler().fit_transform(X)
+        # X = StandardScaler().fit_transform(X)
 
-    # #############################################################################
-    # Compute DBSCAN
-    db = DBSCAN(eps=30, min_samples=50).fit(X)
-    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-    core_samples_mask[db.core_sample_indices_] = True
-    labels = db.labels_
-    x['label'] = labels
-    # x.to_csv('resto_labeled.csv', index=False)
-    x.to_csv('bikes_labeled.csv', index=False)
+        # #############################################################################
+        # Compute DBSCAN
+        db = DBSCAN(eps=100, min_samples=10).fit(X)
+        core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+        core_samples_mask[db.core_sample_indices_] = True
+        labels = db.labels_
+        x['label'] = labels
+        x = x.drop(columns=['OBJECTID'])
+        # x.to_csv('resto_labeled.csv', index=False)
+        x.to_csv(f'{i}_labeled.csv', index=False)
 
-    # Number of clusters in labels, ignoring noise if present.
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-    n_noise_ = list(labels).count(-1)
-    #
-    print('Estimated number of clusters: %d' % n_clusters_)
-    print('Estimated number of noise points: %d' % n_noise_)
+        # Number of clusters in labels, ignoring noise if present.
+        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+        n_noise_ = list(labels).count(-1)
+        #
+        print('Estimated number of clusters: %d' % n_clusters_)
+        print('Estimated number of noise points: %d' % n_noise_)
     # print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
     # print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
     # print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
