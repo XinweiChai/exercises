@@ -3,7 +3,3 @@ files/
 venv/
 __pycache__/
 data/
-*.png
-*.xlsx
-*.csv
-*.jpg
