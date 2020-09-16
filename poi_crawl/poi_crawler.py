@@ -1,6 +1,6 @@
 import requests
 import json
-import xmltodict as xmltodict
+import xmltodict
 from dicttoxml import *
 import pandas as pd
 import re

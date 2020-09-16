@@ -6,7 +6,7 @@ import os
 
 def trans_point_to_shp(folder, fn, idlng, idlat, delimiter=','):
 
-    w = shp.Writer(folder)
+    w = shp.Writer(folder + fn.split(".")[0])
     w.field('lon', 'F', 10, 8)
     w.field('lat', 'F', 10, 8)
     w.field('name', 'C', 100)
@@ -36,8 +36,8 @@ def trans_point_to_shp(folder, fn, idlng, idlat, delimiter=','):
 
 
 if __name__ == '__main__':
-    folder = 'C:\\study\\python\\studyws\\poi-根据分类编码爬取-20191005\\data' + os.sep
-    fn = 'poi-重庆市-160600.csv'
+    folder = 'data\\poi-郑州市-010101\\'
+    fn = 'poi-郑州市-010101.csv'
     idlng = 0
     idlat = 1
     trans_point_to_shp(folder, fn, idlng, idlat)
