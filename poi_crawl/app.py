@@ -117,7 +117,7 @@ def write_to_excel(poilist, cityname, classfield):
 # 数据写入csv文件中
 def write_to_csv(poilist, cityname, classfield):
     data_csv = {}
-    lons, lats, names, addresss, pnames, citynames, business_areas, types = [], [], [], [], [], [], [], []
+    lons, lats, names, address, pnames, citynames, business_areas, types = [], [], [], [], [], [], [], []
 
     for i in poilist:
         location = i['location']
@@ -141,7 +141,7 @@ def write_to_csv(poilist, cityname, classfield):
         lons.append(lng)
         lats.append(lat)
         names.append(name)
-        addresss.append(address)
+        address.append(address)
         pnames.append(pname)
         citynames.append(cityname)
         if not business_area:
@@ -150,7 +150,7 @@ def write_to_csv(poilist, cityname, classfield):
         types.append(type)
     data_csv['lat'], data_csv['lon'], data_csv['name'], data_csv['address'], data_csv['pname'], \
     data_csv['cityname'], data_csv['business_area'], data_csv['type'] = \
-        lats, lons, names, addresss, pnames, citynames, business_areas, types
+        lats, lons, names, address, pnames, citynames, business_areas, types
 
     df = pd.DataFrame(data_csv)
 
