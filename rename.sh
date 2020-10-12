@@ -1,6 +1,6 @@
 #!/bin/bash
 shopt -s nullglob
-for province in */
+for province in data/*/
 do
 	for dir in $province*/
 	do
