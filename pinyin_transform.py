@@ -31,47 +31,47 @@ def to_pinyin():
 
 
 def dependent_tree():
-    table = {}
-    table2 = []
     count = 1
-
-    for i in os.listdir(path):
-        table[i] = [count, 0, i, p.get_pinyin(i, splitter=''), p.get_pinyin(i, splitter='')]
-        table2.append({'id': count, 'pId': 0, 'name': i, 'pinyin': p.get_pinyin(i, splitter=''),
-                       'fullname': p.get_pinyin(i, splitter='')})
-        count += 1
-        for j in os.listdir(path + i):
-            if os.path.isfile(path + i + '/' + j) and (j.split('.')[1] == 'xls' or j.split('.')[1] == 'xlsx'):
-                continue
-            table[j] = [count, table[i][0], j, p.get_pinyin(j, splitter=''),
-                        table[i][3] + '.' + p.get_pinyin(j, splitter='')]
-            table2.append({'id': count, 'pId': table[i][0], 'name': j.split('.')[0], 'pinyin': p.get_pinyin(j.split('.')[0], splitter=''),
-                           'fullname': table[i][3] + '.' + p.get_pinyin(j.split('.')[0], splitter='')})
+    for todo in ['2', '3']:
+        path = "data/" + todo + "-level/"
+        table = {}
+        table2 = []
+        for i in os.listdir(path):
+            table[i] = [count, 0, i, p.get_pinyin(i, splitter=''), p.get_pinyin(i, splitter='')]
+            table2.append({'id': count, 'pId': 0, 'name': i, 'pinyin': p.get_pinyin(i, splitter=''),
+                           'fullname': p.get_pinyin(i, splitter='')})
             count += 1
-            names = []
-            if os.path.isdir(path + i + '/' + j):
-                for k in os.listdir(path + i + '/' + j):
-                    if k.split('.')[1] == 'xls' or k.split('.')[1] == 'xlsx':
-                        continue
-                    x = k.split('.')[0]
-                    if x not in names:
-                        names.append(x)
-                        table[x] = [count, table[j][0], x, p.get_pinyin(x, splitter=''),
-                                    table[i][3] + '.' + table[j][3] + '_' + p.get_pinyin(x, splitter='')]
-                        table2.append(
-                            {'id': count, 'pId': table[j][0], 'name': x, 'pinyin': p.get_pinyin(x, splitter=''),
-                             'fullname': table[i][3] + '.' + table[j][3] + '_' + p.get_pinyin(x, splitter='')})
-                        count += 1
-    contents = list(table.values())
+            for j in os.listdir(path + i):
+                if os.path.isfile(path + i + '/' + j) and (len(j.split('.')) > 2 or j.split('.')[1] != 'shp'):
+                    continue
+                table[j] = [count, table[i][0], j, p.get_pinyin(j, splitter=''),
+                            table[i][3] + '.' + p.get_pinyin(j, splitter='')]
+                table2.append({'id': count, 'pId': table[i][0], 'name': j.split('.')[0],
+                               'pinyin': p.get_pinyin(j.split('.')[0], splitter=''),
+                               'fullname': table[i][3] + '.' + p.get_pinyin(j.split('.')[0], splitter='')})
+                count += 1
+                names = []
+                if os.path.isdir(path + i + '/' + j):
+                    for k in os.listdir(path + i + '/' + j):
+                        if k.split('.')[1] != 'shp':
+                            continue
+                        x = k.split('.')[0]
+                        if x not in names:
+                            names.append(x)
+                            table2.append(
+                                {'id': count, 'pId': table[j][0], 'name': x, 'pinyin': p.get_pinyin(x, splitter=''),
+                                 'fullname': table[i][3] + '.' + table[j][3] + '_' + p.get_pinyin(x, splitter='')})
+                            count += 1
+        contents = list(table.values())
 
-    with open('table.json', 'w') as file:
-        # file.write(str(table))
-        # file.write(str(table2))
-        for i in table2:
-            json.dump(i, file, ensure_ascii=False)
-            file.write('\n')
+        with open('table_level_' + todo + '.json', 'w') as file:
+            # file.write(str(table))
+            # file.write(str(table2))
+            for i in table2:
+                json.dump(i, file, ensure_ascii=False)
+                file.write(',\n')
 
 
 if __name__ == '__main__':
-    # dependent_tree()
-    to_pinyin()
+    dependent_tree()
+    # to_pinyin()
