@@ -1,7 +1,7 @@
 from xpinyin import Pinyin
 import os
 import json
-
+import copy
 p = Pinyin()
 
 
@@ -31,15 +31,28 @@ def to_pinyin():
 
 count = 0
 table = {}
+fullname_table = {}
+
+
+def pick_name(name):
+    if name in fullname_table.values():
+        name[-1] = name[-1].split('_')
+        if len(name[-1]) > 1:
+            name[-1] = name[-1][0] + '_' + str(int(name[-1][1]) + 1)
+            pick_name(name)
+        else:
+            name[-1] = name[-1][0] + '_1'
+    return name
 
 
 def check(name):
-    if name in table.keys():
-        name = name.split('_')
-        if len(name) > 1:
-            return name[0] + '_' + str(int(name[1]) + 1)
-        else:
-            return name[0] + '_1'
+    last = p.get_pinyin(name[-1], splitter='')
+    if len(name) == 1:
+        temp = [last]
+    else:
+        temp = copy.copy(fullname_table[name[:-1]])
+        temp.append(last)
+    fullname_table[tuple(name)] = pick_name(temp)
     return name
 
 
@@ -52,25 +65,17 @@ def write_to_table(path, depth, parent_id):
             path = path.split('.')[-2]
     count += 1
     path = path.replace(root, '')
-    elements = path.split(os.sep)
+    elements = tuple(path.split(os.sep))
+    elements = check(elements)
     filename = elements[-1]
-    if '陕西' in path:
-        x = 1
     if depth == 1:
-        fullname = filename + '.' + filename
+        fullname = fullname_table[elements][0] + '.' + fullname_table[elements][0]
     elif depth == 2:
-        fullname = table[path.split(os.sep)[0]]['pinyin'] + '.' + filename
+        fullname = fullname_table[elements][0] + '.' + fullname_table[elements][1]
     else:
-        fullname = table[path.split(os.sep)[0]]['pinyin'] + '.' + \
-                   table[os.path.split(path)[0]]['pinyin'] + '_' + elements[2]
-    fullname = p.get_pinyin(fullname, splitter='')
-    pinyin = p.get_pinyin(filename, splitter='')
-    if fullname in table.values():
-        fullname = check(fullname)
-        pinyin = pinyin + '_' +fullname.split('_')[-1]
-    # if fullname in table.keys() and depth == table[fullname]['depth']:
+        fullname = fullname_table[elements][0] + '.' + fullname_table[elements][1] + '_' + fullname_table[elements][2]
     table[path] = {'id': count, 'pId': parent_id, 'depth': depth, 'name': filename,
-                   'pinyin': pinyin, 'fullname': fullname}
+                   'pinyin': fullname_table[elements][-1], 'fullname': fullname}
     return count
 
 
@@ -83,11 +88,11 @@ def dependent_tree(root, path, depth, parent_id):
 
 
 if __name__ == '__main__':
-    for todo in ['2', '3']:
+    for todo in [ '3']:
         root = "data/chinese/" + todo + "-level/"
         dependent_tree(root, root, 1, 0)
     with open('table.json', 'w') as file:
-        for i in table:
+        for i in table.values():
             json.dump(i, file, ensure_ascii=False)
             file.write(',\n')
     # to_pinyin()
