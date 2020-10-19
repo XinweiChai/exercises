@@ -2,6 +2,9 @@ from xpinyin import Pinyin
 import os
 import json
 import copy
+import shapefile
+import shutil
+
 p = Pinyin()
 
 
@@ -15,7 +18,7 @@ def rename(name, names, freq):
 
 
 def to_pinyin():
-    x = os.walk("data/2-level")
+    x = os.walk("data/3-level")
     paths = [i for i in x]
     paths.reverse()
     # table = {}
@@ -58,6 +61,7 @@ def check(name):
 
 def write_to_table(path, depth, parent_id):
     global count
+    root = "data/2-level"
     if os.path.isfile(path):
         if path.split('.')[-1] != 'shp':
             return count
@@ -87,12 +91,35 @@ def dependent_tree(root, path, depth, parent_id):
             dependent_tree(root, temp, depth + 1, item_id)
 
 
+def check_validity():
+    for i in os.walk('data/chinese/'):
+        for j in i[2]:
+            if j.split('.')[-1] == 'shp':
+                x = shapefile.Reader(os.path.join(i[0], j))
+                y = x.fields
+                x.close()
+                z = [i[0].upper() for i in y[1:]]
+                if '平潭县' in j:
+                    temp = 1
+                # if 'AERA' in z:
+                #     shapefile.Writer()
+                #     print(os.path.join(i[0], j))
+                if not ('ID' in z and 'CAT' in z and 'AREA' in z and 'X' in z and 'Y' in z):
+                    aa=1
+                    # print(os.path.join(i[0], j))
+                    # name = j.split(".")[0] + '.*'
+                    # source = os.path.join(i[0], name).replace('\\', '/')
+                    # temp = f'mv {source} temp'
+                    # os.system(temp)
+
+
 if __name__ == '__main__':
-    for todo in [ '3']:
-        root = "data/chinese/" + todo + "-level/"
-        dependent_tree(root, root, 1, 0)
-    with open('table.json', 'w') as file:
-        for i in table.values():
-            json.dump(i, file, ensure_ascii=False)
-            file.write(',\n')
-    # to_pinyin()
+    # for todo in ['2', '3']:
+    #     root = "data/chinese/" + todo + "-level/"
+    #     dependent_tree(root, root, 1, 0)
+    # with open('table.json', 'w') as file:
+    #     for i in table.values():
+    #         json.dump(i, file, ensure_ascii=False)
+    #         file.write(',\n')
+    to_pinyin()
+    # check_validity()
