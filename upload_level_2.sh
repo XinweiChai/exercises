@@ -1,28 +1,29 @@
 #!/bin/bash
 shopt -s nullglob
-path=data/2-level
-connect="PGPASSWORD=postgres psql -h 172.168.2.164 -d aqua -U postgres"
+path=2-level
+connect="PGPASSWORD=postgres psql -h 192.168.156.35 -d aqua -U postgres"
 function cluster(){
 # for i in 100 300 500
 # do
-# 	PGPASSWORD=postgres psql -h 172.168.2.164 -d aqua -U postgres -c 'CREATE TABLE '$1'_'$i' AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
+# 	eval "$connect -c 'CREATE TABLE $1'_'$i AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
 # 	ST_ConcaveHull(ST_Collect(ST_Transform(ST_SetSRID(geom, 4326), 3857)), 0.99) AS geom, 
 # 	cid, 
 # 	count(*) as count,
 # 	ST_X(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_x, 
 # 	ST_Y(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_y 
-# 	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM '$1') cluster 
-# 	WHERE cid IS NOT NULL GROUP BY cid) area WHERE sum_area>'$i''
+# 	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM $1) cluster 
+# 	WHERE cid IS NOT NULL GROUP BY cid) area WHERE sum_area>$i'"
 # done
-	$connect -c 'CREATE TABLE '$1'_cluster AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
+	eval "$connect -c 'CREATE TABLE $1'_'cluster AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
 	ST_ConcaveHull(ST_Collect(ST_Transform(ST_SetSRID(geom, 4326), 3857)), 0.99) AS geom, 
 	cid, 
 	count(*) as count,
 	ST_X(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_x, 
 	ST_Y(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_y 
-	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM '$1') cluster 
-	WHERE cid IS NOT NULL GROUP BY cid) area'
+	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM $1) cluster 
+	WHERE cid IS NOT NULL GROUP BY cid) area'"
 }
+
 function cluster_category(){
 for x in {1..6}
 do
@@ -47,14 +48,14 @@ do
 	fi
 	str=${str% OR }
 	echo $str
-	PGPASSWORD=postgres psql -h 172.168.2.164 -d aqua -U postgres -c "CREATE TABLE $1_cluster_$one$two$three AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
+	eval "$connect -c 'CREATE TABLE $1'_'cluster'_'$one$two$three AS SELECT * FROM (SELECT ROUND(sum(area)) AS sum_area,
 	ST_ConcaveHull(ST_Collect(ST_Transform(ST_SetSRID(geom, 4326), 3857)), 0.99) AS geom, 
 	cid, 
 	count(*) as count,
 	ST_X(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_x, 
 	ST_Y(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_y 
 	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM $1) cluster 
-	WHERE cid IS NOT NULL AND ($str) GROUP BY cid) area"
+	WHERE cid IS NOT NULL AND ($str) GROUP BY cid) area'"
 done
 }
 function upload(){
@@ -64,7 +65,7 @@ function upload(){
 function drop(){
 for i in 100 300 500
 do
-	PGPASSWORD=postgres psql -h 172.168.2.164 -d aqua -U postgres -c "DROP TABLE $1_$i"
+	eval "$connect -c 'DROP TABLE $1'_'$i'"
 done
 }
 function drop_category(){
@@ -77,12 +78,12 @@ do
 	let x=x/2
 	let three=x%2
 	echo $one$two$three
-	PGPASSWORD=postgres psql -h 172.168.2.164 -d aqua -U postgres -c "DROP TABLE $1_cluster_$one$two$three"
+	eval "$connect -c 'DROP TABLE $1'_'cluster'_'$one$two$three'"
 done
 }
 function alter(){
-	$connect -c 'ALTER TABLE '$1'_'$2' ADD count integer'
-	$connect -c 'UPDATE '$1'_'$2' SET count = '
+	eval "$connect -c 'ALTER TABLE $1'_'$2 ADD count integer'"
+	eval "$connect -c 'UPDATE $1'_'$2 SET count = '"
 }
 for city in `ls $path`
 do
