@@ -104,9 +104,15 @@ def check_validity():
                 # if 'AERA' in z:
                 #     shapefile.Writer()
                 #     print(os.path.join(i[0], j))
-                if not ('ID' in z and 'CAT' in z and 'AREA' in z and 'X' in z and 'Y' in z):
-                    aa=1
-                    # print(os.path.join(i[0], j))
+                # if not ('ID' in z and 'CAT' in z and 'AREA' in z):
+                if not ('X' in z and 'Y' in z):
+                # pos = z.index('CAT') + 1
+                # pos_id = z.index('ID') + 1
+                # if 'N' not in y[pos]:
+                    # continue
+                # if 'N' not in y[pos_id]:
+                    # aa=1
+                    print(os.path.join(i[0], j))
                     # name = j.split(".")[0] + '.*'
                     # source = os.path.join(i[0], name).replace('\\', '/')
                     # temp = f'mv {source} temp'
@@ -121,5 +127,5 @@ if __name__ == '__main__':
     #     for i in table.values():
     #         json.dump(i, file, ensure_ascii=False)
     #         file.write(',\n')
-    to_pinyin()
-    # check_validity()
+    # to_pinyin()
+    check_validity()
