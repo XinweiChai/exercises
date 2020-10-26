@@ -3,13 +3,14 @@ import json
 import os
 
 workspace = 'aqua_cluster'
-# db_ip = '114.113.156.108'
-db_ip = '192.168.156.35'
+db_ip = '172.168.2.164'
+# db_ip = '192.168.156.35'
 db = 'aqua'
 pw = 'postgres'
 username = 'postgres'
 # url_base = 'http://localhost:8080/geoserver/rest/'
-url_base = 'http://192.168.156.32:8080/geoserver/rest/'
+url_base = 'http://172.169.0.6:8080/geoserver/rest/'
+# url_base = 'http://192.168.156.32:8080/geoserver/rest/'
 
 for i in os.listdir('data/3-level'):
     # path = 'E:/exercises/aquaculture/'
@@ -17,13 +18,13 @@ for i in os.listdir('data/3-level'):
     # get data and compress to zip
     os.system(f'pgsql2shp -f data/{i}.shp -h {db_ip} -P {pw} -u {username} {db} '
               f'\"SELECT cat,area,geom FROM {i}.{i}\"')
-    os.system(f'7za a data/{i}_data.zip {path}/data/{i}.*')
+    os.system(f'7za a data/{i}.zip {path}/data/{i}.* -x!*.zip')
     auth = ('admin', 'geoserver')
     url_store = url_base + 'workspaces/' + workspace + '/datastores/' + i + '/'
 
     # upload data to store
     x = requests.put(url_store + 'file.shp', auth=auth, headers={'content-type': 'application/zip'},
-                     data=open(f'data/{i}_data.zip', 'rb').read())
+                     data=open(f'data/{i}.zip', 'rb').read())
     print(x)
     print('upload data to store')
     url_feature = url_store + 'featuretypes/' + i + '.json'
@@ -59,5 +60,5 @@ for i in os.listdir('data/3-level'):
     print('create layer groups')
 
     # clean directory
-    os.system(f'rm data/{i}*')
+    os.system(f'rm data/{i}.*')
 
