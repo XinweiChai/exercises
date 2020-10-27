@@ -103,13 +103,13 @@ do
 	# 	else
 	# 		shp2pgsql -a -s 3857 $county $city.$city|$connect
 	# 	fi
-		# drop $city.$name $i
-		# cluster $city.$name $i
-		cluster_category $city.$name $i
-		# drop_category $city.$name $i
+		# drop $city.$name
+		# cluster $city.$name
+		cluster_category $city.$name
+		# drop_category $city.$name
 	done
-	# drop $city.$city $i
-	# cluster $city.$city $i
-	cluster_category $city.$city $i
-	# drop_category $city.$city $i
+	# drop $city.$city
+	# cluster $city.$city
+	cluster_category $city.$city
+	# drop_category $city.$city
 done
