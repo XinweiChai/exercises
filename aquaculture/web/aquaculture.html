@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/css/ol.css" type="text/css">
+    <style>
+      .map {
+        height: 500px;
+        /*width: 100%;*/
+        width:700px;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/build/ol.js"></script>
+    <script src="menu.js"></script>
+    <title>养殖水体地图</title>
+  </head>
+  <body>
+    地区：<select id="province"></select>
+    <select id="city"></select>
+    <select id="county"></select>
+
+    阈值：<select id="threshold">
+    <option value="100">100m</option>
+    <option value="300">300m</option>
+    <option value="500">500m</option>
+    </select>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <button id=button onclick="test1()">Enter</button>
+    <div id="map" class="map"></div>
+    <script type="text/javascript">
+    	var osmLayer = new ol.layer.Tile({
+    		source: new ol.source.OSM()
+    	});
+      var aqua = null
+      var view = new ol.View({
+          center: ol.proj.fromLonLat([120.0066, 32.5997]),
+          zoom: 10,
+          minZoom: 0,
+          maxZoom: 20
+        });
+		  var map = new ol.Map({
+		    layers: [
+		    osmLayer
+		    ],
+		    controls: [],
+		    target: 'map',
+		    view: view
+		  });
+    </script>
+    <script type="text/javascript">
+      test1 = function(){
+        map.removeLayer(aqua);
+        var province = document.getElementById("province").value;
+        var city = document.getElementById("city").value;
+        var county = document.getElementById("county").value;
+        var x = document.getElementById("threshold").value;
+        aqua = new ol.layer.Image({
+          source: new ol.source.ImageWMS({
+            // url: 'http://localhost:8080/geoserver/aquaculture/wms?',
+            url: 'http://172.169.0.6:8080/geoserver/aqua_cluster/wms?',
+            params: {"LAYERS": 'aqua_cluster:aqua_combine_precomputed',
+                // "viewparams":"place:jiangsusheng.taizhoushi;cluster:jiangsusheng.taizhoushi_cluster_100;threshold:100;cond:cat=1 OR cat=2 OR cat=3 OR cat=4"
+                "viewparams":"place:beijingshi.beijingshi;cluster:beijingshi.beijingshi_cluster_110;threshold:100;cond:cat=1 OR cat=2"
+                // "viewparams":'place:' + name + ';cluster:'+ name + '_' + option + 'threshold:' + x
+            }
+          })
+        });
+      var p1 = ol.proj.transform([119.64143016, 31.9439733247504], 'EPSG:4326', 'EPSG:3857')
+      var p2 = ol.proj.transform([119.64143016, 33.21966996], 'EPSG:4326', 'EPSG:3857')
+      var p3 = ol.proj.transform([120.546709728159, 33.21966996], 'EPSG:4326', 'EPSG:3857')
+      var p4 = ol.proj.transform([120.546709728159, 31.9439733247504], 'EPSG:4326', 'EPSG:3857')
+      var coor_box = [p1, p2, p3, p4]
+      var polygon = new ol.geom.Polygon([coor_box])
+      view.fit(polygon,map.getSize());
+      map.addLayer(aqua);
+      }
+    </script>
+  </body>
+</html>
