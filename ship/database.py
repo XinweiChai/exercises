@@ -54,7 +54,7 @@ for i in range(num_side):
                      'cat': id % 5, 'tonnage': 60.0 + (id % 5) * 0.1, 'info': 'XXX', 'affiliation': 'XXX_fleet'}
 
 while True:
-# for t in range(iterations):
+    # for t in range(iterations):
     begin = datetime.datetime.now()
     for i in range(num_side):
         for j in range(num_side):
@@ -65,10 +65,14 @@ while True:
             content = {'id': id, 'name': 'ship_' + str(id),
                        'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'pos_x': tempi, 'pos_y': tempj,
                        'cat': id % 5, 'tonnage': ships[id]['tonnage'], 'info': 'XXX', 'affiliation': 'XXX_fleet'}
-            r.hmset(id, content)
-            ships[id] = content
-            val = list(content.values())
-            val = [f"\'{str(i)}\'" for i in val]
+            r.hset('ship', id, str(content))
+            r.lpush('ship2', str(content))
+            if r.llen('ship2') > 10000:
+                x = r.lrange('ship2', 0, -1)
+                [i for i in x]
+            # ships[id] = content
+            # val = list(content.values())
+            # val = [f"\'{str(i)}\'" for i in val]
             # cursor.execute(f"INSERT INTO \"{curr}\" VALUES ({','.join(val)})")
             # cursor.execute(f"INSERT INTO current VALUES ({','.join(val)}) ON CONFLICT(id) DO "
             #                f"UPDATE SET time={val[2]}, pos_x={tempi}, pos_y={tempj}")
@@ -77,5 +81,3 @@ while True:
     # print(f"i={i}")
     end = datetime.datetime.now()
     print(end - begin)
-
-
