@@ -32,7 +32,7 @@ with open('poi_code', 'r') as f:
     keyword = f.read().split(',')
 
 # TODO 3.城市，多个用逗号隔开
-city = ['郑州市']
+city = ['北京市']
 
 # TODO 4.输出数据坐标系,1为高德GCJ20坐标系，2WGS84坐标系，3百度BD09坐标系
 coord = 2

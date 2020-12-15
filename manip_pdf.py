@@ -4,7 +4,7 @@ import os
 import re
 
 # directory = 'C:/Users/zby11/Desktop/test'
-directory = 'E:/doc/Papers/Spark'
+directory = 'C:/Users/Administrator/Desktop'
 
 
 def rename_pdf(path):
