@@ -54,8 +54,8 @@ do
 	count(*) as count,
 	ST_X(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_x, 
 	ST_Y(ST_Centroid(ST_ConcaveHull(ST_Collect(geom),0.99))) AS centroid_y 
-	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM $1) cluster 
-	WHERE cid IS NOT NULL AND ($str) GROUP BY cid) area'"
+	FROM (SELECT *, ST_ClusterDBSCAN(ST_Transform(ST_SetSRID(geom, 4326), 3857), eps := 50, minpoints := 2) over () AS cid FROM $1 WHERE ($str)) cluster 
+	WHERE cid IS NOT NULL GROUP BY cid) area'"
 done
 }
 function upload(){
