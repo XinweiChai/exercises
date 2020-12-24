@@ -44,10 +44,10 @@ def meta_data():
                             f"ST_Y(ST_Centroid(ST_Collect(geom)))"
                             f"FROM {i}.{j}")
                 x = cur.fetchall()[0]
-                cur.execute(f"INSERT INTO {i}.meta_data VALUES ('{i}_{j}',{x[0]},{x[1]},{x[2]},{x[3]},{x[4]},{x[5]})")
+                cur.execute(f"INSERT INTO {i}.meta_data VALUES ('{i}.{j}',{x[0]},{x[1]},{x[2]},{x[3]},{x[4]},{x[5]})")
                 cnx.commit()
 
 
 if __name__ == '__main__':
-    # meta_data()
-    check_integrity()
+    meta_data()
+    # check_integrity()
