@@ -117,6 +117,11 @@ def interpolation_lagrange(x, y, to_compute):  # 三次样条拉格朗日插值�
                                  [x[n - 2] ** 3, x[n - 2] ** 2, x[n - 2], 1],
                                  [x[n - 3] ** 3, x[n - 3] ** 2, x[n - 3], 1]],
                                 [0, y[n - 1], y[n - 2], y[n - 3]])
+    temp = solve([[6 * x[n - 1], 2, 0, 0],
+                  [x[n - 1] ** 3, x[n - 1] ** 2, x[n - 1], 1],
+                  [x[n - 2] ** 3, x[n - 2] ** 2, x[n - 2], 1],
+                  [x[n - 3] ** 3, x[n - 3] ** 2, x[n - 3], 1]],
+                 [0, y[n - 1], y[n - 2], y[n - 3]])
     for i in to_compute:
         pos = position(x, i)
         if pos <= 0:
@@ -145,7 +150,38 @@ def descale(df, mean_x, x_axis='time'):
     return df
 
 
+def solve(A, y):
+    n = len(A)
+    A = np.array(A)
+    y = np.array(y).T
+    for k in range(n):
+        max_line = k
+        max_value = A[max_line, k]
+        for i in range(k + 1, n):
+            t = abs(A[i, k])
+            if t > max_value:
+                max_value = t  # 列选主元
+                max_line = i
+        if max_line != k:
+            y[[k, max_line]] = y[[max_line, k]]
+            A[[k, max_line], :] = A[[max_line, k], :]
+        y[k] /= A[k, k]
+        A[k, :] /= A[k, k]  # 系数归一化
+        for i in range(k + 1, n):
+            t = A[i, k]
+            A[i, k] = 0
+            y[i] -= y[k] * t  # 常数向量消元
+            A[i, k + 1:] -= A[k, k + 1:] * t  # 系数矩阵消元
+    for i in range(n - 1, 0, -1):
+        y[:i] -= A[:i, i] * y[i]
+    return y
+
+
 if __name__ == '__main__':
+    A = [[1.0, 2.0, 3.5], [3.0, 4.0, 2.2], [1.2, 3.5, 4.8]]
+    y = [3.0, 5.0, 9.0]
+    test = solve(A, y)
+    test2= np.linalg.solve(A,y)
     eps = 1 / 4250000  # 平滑因子
     sig = 1  # 权重
     x = 'time'
@@ -183,7 +219,13 @@ if __name__ == '__main__':
     final = descale(final, mean_x)
     final.plot(x=x, y=y, ax=ax, kind='scatter', color='blue')
 
+    # linear = np.c_[x_tocompute, y3]
+    # linear = pd.DataFrame(linear, columns=[x, y])
+    # linear = descale(linear, mean_x)
+    # linear.plot(x=x, y=y, ax=ax, kind='scatter', color='red')
+
+    # ax.legend(['original', '3-sigma', 'smoothed', 'cubic_interpolation', 'linear interpolation'])
     ax.legend(['original', '3-sigma', 'smoothed', 'interpolation'])
     plt.show()
-    final.to_csv("59200.txt", index=False)
-    # final.to_csv("59250.txt", index=False)
+    # final.to_csv("59200.txt", index=False)
+    final.to_csv("59250.txt", index=False)
