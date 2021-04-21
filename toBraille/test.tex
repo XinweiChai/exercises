@@ -1,0 +1,29 @@
+\documentclass{article}
+
+\usepackage{fontspec}
+\setmainfont{Braille Normal}
+\setmonofont{Braille Normal}
+\usepackage{lipsum}
+\usepackage{verbatim}
+
+\renewenvironment{equation}%
+  {\endgraf\noindent%
+    \endgraf\verbatim}%
+   {\endverbatim}
+
+\begin{document}
+abcdefghijklmnopqrstuvwxyz
+
+hokiiab0t4
+
+\begin{equation}
+y = m x +b
+\end{equation}
+
+1
+
+\begin{equation}
+x = y
+\end{equation}
+
+\end{document}

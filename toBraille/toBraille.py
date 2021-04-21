@@ -5,6 +5,8 @@ import re
 import sys
 from xpinyin import Pinyin
 from dotsBraille import braille2dots
+from pypinyin import pinyin, Style
+import jieba
 
 
 class KanjiToPinyin(object):
@@ -252,7 +254,7 @@ class Character(object):
         self.pinyin_notone = str
 
 
-def toBraille(string=''):
+def toBraille(string: str):
     punctuation_dict = {
         '。': '"2',
         '，': '"',
@@ -334,4 +336,8 @@ def to_dots(s: str):
 if __name__ == '__main__':
     print(toBraille('猫2sfaf'))
     print(toBraille('活期一本通'))
-    print(to_dots(toBraille("重庆")[1]))
+    print(to_dots(toBraille("活期一本通")[1]))
+    l = list(jieba.cut("文本转盲文在线工具,把文本转换成为盲文点字,支持常用中英文和标点符号。"))
+    print(pinyin(l, style=Style.INITIALS))
+    print(pinyin(jieba.cut("风格"), style=Style.FINALS_TONE3))
+    y = 1
