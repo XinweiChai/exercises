@@ -2,12 +2,13 @@ from PIL import Image, ImageDraw
 import json
 import os
 
-json_path = 'sse_json/'
-ori_pic_path = 'sse-images/'
-out_path = 'out/'
+pwd = "/home/chai/Desktop/semantic-segmentation-editor-1.6.0/"
+json_path = pwd + 'sse_json/'
+ori_pic_path = '/home/chai/sse-images_all/'
+out_path = pwd + 'out/'
 class_name = 'Lab430-街景'
 
-with open('settings.json', 'r') as f:
+with open(pwd + 'settings.json', 'r') as f:
     settings = json.load(f)
     dct = [i for i in settings['sets-of-classes'] if i['name'] == class_name][0]['objects']
 
