@@ -10,7 +10,7 @@ def rename_pdf(path):
         (short_name, extension) = os.path.splitext(file)
         if extension == '.pdf':
             with open(os.path.join(path, file), 'rb') as f:
-                pdf_reader = PyPDF2.PdfFileReader(f,strict=False)
+                pdf_reader = PyPDF2.PdfFileReader(f, strict=False)
                 paper_title = pdf_reader.getDocumentInfo().title
                 title = re.sub("[:?\"]", ",", str(paper_title))
             if paper_title and paper_title != 'untitled':
@@ -18,26 +18,23 @@ def rename_pdf(path):
 
 
 def modify_metadata(fn, title):
-    fin = open(fn, 'rb')
-    reader = PyPDF2.PdfFileReader(fin)
-    writer = PyPDF2.PdfFileWriter()
-    writer.appendPagesFromReader(reader)
-    metadata = reader.getDocumentInfo()
-    writer.addMetadata(metadata)
+    with open(fn, 'rb') as fin:
+        reader = PyPDF2.PdfFileReader(fin)
+        writer = PyPDF2.PdfFileWriter()
+        writer.appendPagesFromReader(reader)
+        metadata = reader.getDocumentInfo()
+        writer.addMetadata(metadata)
+        # Write your custom metadata here:
+        writer.addMetadata({
+            '/Title': title
+        })
 
-    # Write your custom metadata here:
-    writer.addMetadata({
-        '/Title': title
-    })
-
-    fout = open('result.pdf', 'wb')
-    writer.write(fout)
-
-    fin.close()
-    fout.close()
+        with open('result.pdf', 'wb') as fout:
+            writer.write(fout)
 
 
 if __name__ == '__main__':
     directory = sys.argv[1] if len(sys.argv) > 1 else '.'
-    # modify_metadata('123.pdf', "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems")
-    rename_pdf(directory)
+    f2 = "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems"
+    # modify_metadata('123.pdf', f2)
+    # rename_pdf(directory)

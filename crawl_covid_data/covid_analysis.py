@@ -5,34 +5,37 @@ from bs4 import BeautifulSoup
 import json
 
 url_pic = []
+search_url = "http://search.gd.gov.cn/api/search/all/"
 
 
-def page_with_pics():
+def page_with_pics(keyword):
     y = []
     for i in url_pic:
         response = requests.get(i)
         soup = BeautifulSoup(response.content, 'html.parser')
         title = soup.title.text
-        assert "全国疫情" in title
-        year = re.search(r"\d{4}(?=年)", title).group()
-        month = re.search(r"\d{1,2}(?=月)", title).group().zfill(2)
-        day = re.search(r"\d{1,2}(?=日)", title).group().zfill(2)
-        hour = re.search(r"\d{1,2}(?=时)", title).group().zfill(2)
-        x = year + month + day
-        paras = soup.select('p[style="text-align: justify;"]')
-        if paras:
-            paras = [i.find_all(text=True) for i in paras[:-2]]
-            paras = [x for x in paras if x != []]
-            paras = [''.join([j.strip() for j in i]) for i in paras]
-            fname = 'new/' + x + ".txt"
-            with open(fname, 'a') as f:
-                for t in paras:
-                    if len(t) > 0:
-                        f.writelines(t + "\n")
-        else:
-            fname = 'pic/' + x + ".txt"
-            with open(fname, 'a') as f:
-                f.writelines(i + '\n')
+        # assert keyword in title
+        if keyword in title:
+            # year = re.search(r"\d{4}(?=年)", title).group()
+            month = re.search(r"\d{1,2}(?=月)", title).group().zfill(2)
+            day = re.search(r"\d{1,2}(?=日)", title).group().zfill(2)
+            # hour = re.search(r"\d{1,2}(?=时)", title).group().zfill(2)
+            # x = year + month + day
+            x = month + day
+            paras = soup.select('p[style="text-align: justify;"]')
+            if paras:
+                paras = [i.find_all(text=True) for i in paras[:-2]]
+                paras = [x for x in paras if x != []]
+                paras = [''.join([j.strip() for j in i]) for i in paras]
+                fname = 'new/' + x + ".txt"
+                with open(fname, 'a') as f:
+                    for t in paras:
+                        if len(t) > 0:
+                            f.writelines(t + "\n")
+            else:
+                fname = 'pic/' + x + ".txt"
+                with open(fname, 'a') as f:
+                    f.writelines(i + '\n')
     print(y)
 
 
@@ -155,6 +158,7 @@ def match():
     # dirs = ['dat/']
     for i in dirs:
         for j in os.listdir(i):
+            # try:
             with open(i + j, 'r', encoding='UTF-8-sig') as f:
                 contents = f.read().split()
                 temp = []
@@ -165,28 +169,62 @@ def match():
                 if temp:
                     print(j)
                     print('\n'.join(temp))
+            # except UnicodeDecodeError:
+            #     f.close()
+            #     with open(i + j, 'r', encoding='gbk') as f:
+            #         contents = f.read()
+            #     with open(i + j, 'w', encoding='utf-8') as f:
+            #         f.write(contents)
 
 
-if __name__ == '__main__':
-    # x = []
-    # search_url = "http://search.gd.gov.cn/api/search/all/"
-    # json = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": "全国疫情中高风险地区", "page": 1, "position": "title",
-    #         "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "smart"}
-    # for i in range(1, 15):
-    #     json['page'] = i
-    #     response = requests.post(search_url, json=json)
-    #     res = response.json()
-    #     for j in res['data']['news']['list']:
-    #         x.append(j['url'])
-    # with open('urls.txt', 'w') as f:
-    #     for i in x:
-    #         f.writelines(i + '\n')
+
+
+def crawl():
+    x = []
+    json = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": "全国疫情中高风险地区", "page": 1, "position": "title",
+            "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "smart"}
+    for i in range(1, 15):
+        json['page'] = i
+        response = requests.post(search_url, json=json)
+        res = response.json()
+        for j in res['data']['news']['list']:
+            x.append(j['url'])
+    with open('urls.txt', 'w') as f:
+        for i in x:
+            f.writelines(i + '\n')
+    with open('urls.txt', 'r') as f:
+        x = f.read().split('\n')
+        for i in x:
+            print(i)
+            Crawl_page().overall(i)
+    print(url_pic)
+
+
+def crawl2():
+    x = []
+    json = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": "最新疫情风险等级提醒", "page": 1, "position": "title",
+            "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "time"}
+    for i in range(1, 13):
+        json['page'] = i
+        response = requests.post(search_url, json=json)
+        res = response.json()
+        for j in res['data']['news']['list']:
+            x.append(j['url'])
+    with open('urls.txt', 'w') as f:
+        for i in x:
+            f.writelines(i + '\n')
     # with open('urls.txt', 'r') as f:
     #     x = f.read().split('\n')
     #     for i in x:
     #         print(i)
     #         Crawl_page().overall(i)
-    # print(url_pic)
+    print(url_pic)
+
+
+if __name__ == '__main__':
+    # crawl()
+    # crawl2()
+    # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
-    create_embedded_location_list()
+    # create_embedded_location_list()
     match()
