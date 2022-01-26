@@ -14,6 +14,7 @@ def rename_pdf(path):
                 paper_title = pdf_reader.getDocumentInfo().title
                 title = re.sub("[:?\"]", ",", str(paper_title))
             if paper_title and paper_title != 'untitled':
+                x = pdf_reader.getPage(0)
                 shutil.move(os.path.join(path, file), os.path.join(path, title + ".pdf"))
 
 
@@ -38,3 +39,4 @@ if __name__ == '__main__':
     f2 = "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems"
     # modify_metadata('123.pdf', f2)
     # rename_pdf(directory)
+    rename_pdf('.')
