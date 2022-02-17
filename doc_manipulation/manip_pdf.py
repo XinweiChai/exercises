@@ -34,9 +34,20 @@ def modify_metadata(fn, title):
             writer.write(fout)
 
 
+def remove_image(fn):
+    with open(fn, "rb") as inputStream:
+        src = PyPDF2.PdfFileReader(inputStream)
+        with open("dst.pdf", "wb") as outputStream:
+            output = PyPDF2.PdfFileWriter()
+            [output.addPage(src.getPage(i)) for i in range(src.getNumPages())]
+            output.removeImages()
+            output.write(outputStream)
+
+
 if __name__ == '__main__':
-    directory = sys.argv[1] if len(sys.argv) > 1 else '.'
-    f2 = "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems"
+    # directory = sys.argv[1] if len(sys.argv) > 1 else '.'
+    # f2 = "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems"
     # modify_metadata('123.pdf', f2)
     # rename_pdf(directory)
-    rename_pdf('.')
+    # rename_pdf('.')
+    remove_image("TEF-Canada-Expression-Orale-150-Topics.pdf")
