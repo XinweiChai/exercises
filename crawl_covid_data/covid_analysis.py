@@ -1,11 +1,17 @@
+from xml.parsers.expat import ExpatError
+
 import requests
 import re
 import os
+
+import xmltojson
 from bs4 import BeautifulSoup
 import json
 
 url_pic = []
 search_url = "http://search.gd.gov.cn/api/search/all/"
+path = '/home/chai/Documents/data/covid_warning_areas'
+os.chdir(path)
 
 
 def page_with_pics(keyword):
@@ -124,6 +130,7 @@ def create_embedded_location_list():
     req = requests.get('http://www.ip33.com/area_code.html')
     soup = BeautifulSoup(req.content, 'html.parser')
     content = soup.select('.ip')
+    x = soup.div['ip']
     cities = [i.get_text().strip() for i in content]
     res = {}
     for i in cities:
@@ -144,20 +151,23 @@ def helper(k, dct):
             province = k[:pos]
             if k[pos] in ['市', '省']:
                 pos += 1
-            for pos2 in range(pos + 2, len(k) + 1):
-                for ele in dct[province]:
-                    if k[pos:pos2] in ele:
-                        return True
+            # for pos2 in range(pos + 2, len(k) + 1):
+            for pos2 in range(len(k), pos + 1, -1):
+                # for ele in dct[province]:
+                #     if k[pos:pos2] in ele:
+                #         return True
+                if k[pos:pos2] in dct[province]:
+                    return True
     return False
 
 
-def match():
-    with open('cities.json', 'r') as f:
+def match(fn):
+    with open(os.path.join(path, fn), 'r') as f:
         dct = json.loads(f.read())
     dirs = ['mid/', 'high/']
     # dirs = ['dat/']
     for i in dirs:
-        for j in os.listdir(i):
+        for j in os.listdir(os.path.join(path, i)):
             # try:
             with open(i + j, 'r', encoding='UTF-8-sig') as f:
                 contents = f.read().split()
@@ -175,8 +185,6 @@ def match():
             #         contents = f.read()
             #     with open(i + j, 'w', encoding='utf-8') as f:
             #         f.write(contents)
-
-
 
 
 def crawl():
@@ -221,10 +229,58 @@ def crawl2():
     print(url_pic)
 
 
+def precise_list():
+    url = "http://www.ip33.com/area_code.html"
+    req = requests.get(url)
+    with open('y.html', 'w') as f:
+        req.encoding = 'utf-8'
+        f.write(req.text)
+    with open('y.html', 'r') as f:
+        html = f.read()
+        html = html.replace('&', '')
+        json_ = xmltojson.parse(html)
+    x = json.loads(json_)
+    y = x['html']['body']['div'][1]['div']
+    y = y[1:]
+    z = {}
+    for i in y:
+        i[i['h4'].split()[0]] = i['ul']
+        i.pop('@class')
+        i.pop('h4')
+        i.pop('ul')
+        for j in i:
+            if j == '上海':
+                ax = 1
+            i[j] = list(i[j].values())[0]
+            temp = i[j][1]['ul']
+            for k in i[j]:
+                k['h5'] = k['h5'].split()
+                if k['ul'] and k['ul']['li']:
+                    if type(k['ul']['li']) == list:
+                        k['ul'] = [{i.split()[0]:i.split()[1]} for i in k['ul']['li']]
+                    else:
+                        k['ul'] = [{k['ul']['li'].split()[0]:k['ul']['li'].split()[1]}]
+                else:
+                    k['ul'] = []
+            z[j] = i[j]
+            # for k in i[j]['li']:
+            #     try:
+            #         if type(k['ul']['li']) == list:
+            #             z[j] = z.get(j, []) + k['ul']['li']
+            #         else:
+            #             z[j] = z.get(j, []) + [k['ul'].get('li', None)]
+            #     except TypeError:
+            #         pass
+    with open('areas.json', 'w') as f:
+        json.dump(z, f, ensure_ascii=False)
+
+
 if __name__ == '__main__':
     # crawl()
     # crawl2()
     # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
     # create_embedded_location_list()
-    match()
+    # match('areas.json')
+    # match('cities.json')
+    precise_list()
