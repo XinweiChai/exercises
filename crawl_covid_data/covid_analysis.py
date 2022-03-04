@@ -13,6 +13,9 @@ search_url = "http://search.gd.gov.cn/api/search/all/"
 path = '/home/chai/Documents/data/covid_warning_areas'
 os.chdir(path)
 
+# Direct_administered_municipalities
+dam = ('北京', '天津', '上海', '重庆')
+
 
 def page_with_pics(keyword):
     y = []
@@ -162,7 +165,7 @@ def helper(k, dct):
 
 
 def match(fn):
-    with open(os.path.join(path, fn), 'r') as f:
+    with open(fn, 'r') as f:
         dct = json.loads(f.read())
     dirs = ['mid/', 'high/']
     # dirs = ['dat/']
@@ -232,47 +235,65 @@ def crawl2():
 def precise_list():
     url = "http://www.ip33.com/area_code.html"
     req = requests.get(url)
-    with open('y.html', 'w') as f:
-        req.encoding = 'utf-8'
-        f.write(req.text)
-    with open('y.html', 'r') as f:
-        html = f.read()
-        html = html.replace('&', '')
-        json_ = xmltojson.parse(html)
+    req.encoding = 'utf-8'
+    html = req.text.replace('&', '')
+    json_ = xmltojson.parse(html)
     x = json.loads(json_)
     y = x['html']['body']['div'][1]['div']
     y = y[1:]
-    z = {}
-    for i in y:
-        i[i['h4'].split()[0]] = i['ul']
-        i.pop('@class')
-        i.pop('h4')
-        i.pop('ul')
+    y = {i['h4'].split()[0]: {j['h5'].split()[0]: j['ul'] for j in i['ul']['li']} for i in y}
+    for i in y.values():
         for j in i:
-            if j == '上海':
-                ax = 1
-            i[j] = list(i[j].values())[0]
-            temp = i[j][1]['ul']
-            for k in i[j]:
-                k['h5'] = k['h5'].split()
-                if k['ul'] and k['ul']['li']:
-                    if type(k['ul']['li']) == list:
-                        k['ul'] = [{i.split()[0]:i.split()[1]} for i in k['ul']['li']]
-                    else:
-                        k['ul'] = [{k['ul']['li'].split()[0]:k['ul']['li'].split()[1]}]
+            if not i[j]:
+                i[j] = {}
+            else:
+                cur = i[j]['li']
+                if type(cur) == list:
+                    for k in cur:
+                        temp = k.split()
+                        i[j][temp[0]] = temp[1]
                 else:
-                    k['ul'] = []
-            z[j] = i[j]
-            # for k in i[j]['li']:
-            #     try:
-            #         if type(k['ul']['li']) == list:
-            #             z[j] = z.get(j, []) + k['ul']['li']
-            #         else:
-            #             z[j] = z.get(j, []) + [k['ul'].get('li', None)]
-            #     except TypeError:
-            #         pass
+                    i[j][cur.split()[0]] = cur.split()[1]
+                i[j].pop('li')
     with open('areas.json', 'w') as f:
-        json.dump(z, f, ensure_ascii=False)
+        json.dump(y, f, ensure_ascii=False)
+
+
+def helper2(k, dct):
+    flag = False
+    for pos, char in enumerate(k):
+        if flag:
+            break
+        if k[:pos] in dct:
+            flag = True
+            province = k[:pos]
+            if k[:pos] in dam:
+                pos2 = pos
+                to_search = [j for i in dct[province] for j in i]
+            else:
+                for pos2 in range(pos + 2, len(k) + 1):
+                    temp = k[pos + 1:pos2]
+                    if temp in dct[province]:
+                        to_search = dct[province][temp]
+                        break
+    return any(k[pos2:pos3] in to_search for pos3 in range(pos2 + 1, len(k) + 1))
+
+
+def match2(fn):
+    with open(fn, 'r') as f:
+        dct = json.loads(f.read())
+    dirs = ['mid/', 'high/']
+    for i in dirs:
+        for j in os.listdir(os.path.join(path, i)):
+            with open(i + j, 'r', encoding='UTF-8-sig') as f:
+                contents = f.read().split()
+                temp = []
+                for k in contents:
+                    if not helper2(k, dct):
+                        temp.append(k)
+                if temp:
+                    print(j)
+                    print('\n'.join(temp))
 
 
 if __name__ == '__main__':
@@ -281,6 +302,6 @@ if __name__ == '__main__':
     # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
     # create_embedded_location_list()
-    # match('areas.json')
+    match2('areas.json')
     # match('cities.json')
-    precise_list()
+    # precise_list()

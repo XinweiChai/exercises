@@ -28,7 +28,7 @@ amap_web_key = '2da311fe5bbc69e2ef1550cb329c2a2f'
 
 # TODO 2.分类关键字,最好对照<<高德地图POI分类关键字以及编码.xlsx>>来填写对应编码，多个用逗号隔开
 # keyword = poi_list()
-with open('poi_code', 'r') as f:
+with open('amap_poicode.csv', 'r') as f:
     keyword = f.read().split(',')
 
 # TODO 3.城市，多个用逗号隔开
