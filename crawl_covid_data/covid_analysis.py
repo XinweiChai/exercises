@@ -8,6 +8,7 @@ import os
 import xmltojson
 from bs4 import BeautifulSoup
 import json
+import jieba
 
 url_pic = []
 search_url = "http://search.gd.gov.cn/api/search/all/"
@@ -15,7 +16,7 @@ path = '/home/chai/Documents/data/covid_warning_areas'
 os.chdir(path)
 
 # Direct_administered_municipalities
-dam = ('北京', '天津', '上海', '重庆')
+dam = ('北京市', '天津市', '上海市', '重庆市')
 
 
 def page_with_pics(keyword):
@@ -249,8 +250,8 @@ def precise_list():
     abc = {}
     for i in y:
         name = i['h4'].split()[0]
-        for m in suffix_lvl1:
-            name = name.replace(m, '')
+        # for m in suffix_lvl1:
+        #     name = name.replace(m, '')
         temp = {}
         if type(i['ul']['li']) == list:
             for j in i['ul']['li']:
@@ -281,61 +282,22 @@ def precise_list():
         json.dump(y, f, ensure_ascii=False)
 
 
-exception_list = ['广东省东莞市', '广东省中山市']
+def renew_name(s):
+    for pos in range(len(s)):
+        if s[:pos] in suffix_lvl1:
+            return s[pos:], s[:pos]
+    return s, ''
+
+
+def req(region, query):
+    key = 'UKG1G71ttFxlVRwOqCrllVXLfRs4MegB'
+    url = 'https://api.map.baidu.com/place/v2/suggestion?'
+    param = {'query': query, 'region': region, 'output': 'json', 'ak': key}
+    return requests.get(url=url, params=param)
 
 
 def helper2(k, dct):
     flag = False
-    if k[:6] in exception_list:
-        return True
-    for pos, char in enumerate(k):
-        if flag:
-            break
-        if k[:pos] in dct:
-            flag = True
-            province = k[:pos]
-            new_name = renew_name(k[pos:])[0]
-            if province in dam:
-                pos2 = 0
-                to_search = [j for i in dct[province] for j in dct[province][i]]
-                break
-            else:
-                for pos2 in range(1, len(k) + 1):
-                    temp = new_name[:pos2]
-                    if temp in dct[province]:
-                        to_search = dct[province][temp]
-                        break
-    return any(new_name[pos2:pos3] in to_search for pos3 in range(pos2 + 1, len(k) + 1))
-
-
-def match2(fn):
-    with open(fn, 'r') as f:
-        dct = json.loads(f.read())
-    dirs = ['mid/', 'high/']
-    for i in dirs:
-        for j in os.listdir(os.path.join(path, i)):
-            with open(i + j, 'r', encoding='UTF-8-sig') as f:
-                contents = f.read().split()
-                temp = []
-                for k in contents:
-                    if not helper2(k, dct):
-                        temp.append(k)
-                if temp:
-                    print(j)
-                    print('\n'.join(temp))
-
-
-def renew_name(s):
-    for pos in range(len(s)):
-        if s[:pos] in suffix_lvl1:
-            return s[pos:],s[:pos]
-    return s,''
-
-
-def helper3(k, dct):
-    flag = False
-    # if k[:6] in exception_list:
-    #     return True
     for pos, char in enumerate(k):
         if flag:
             break
@@ -346,45 +308,47 @@ def helper3(k, dct):
             if province in dam:
                 for pos2 in range(1, len(new_name)):
                     district = new_name[:pos2]
-                    search_from = [j for i in dct[province] for j in dct[province][i]]
-                    if district in search_from:
-                        return province + province_name + district, new_name[pos2:]
+                    for i in dct[province]:
+                        if district in dct[province][i]:
+                            return dct[province][i][district]
             else:
                 for pos2 in range(1, len(k) + 1):
                     temp = new_name[:pos2]
                     if temp in dct[province]:
-                        # search_from = dct[province][temp]
-                        # for pos3 in range(pos2, len(k) + 1):
-                        # if new_name[pos2:pos3] in search_from:
-                        return province + province_name + new_name[:pos2], new_name[pos2:]
+                        search_from = dct[province][temp]
+                        for pos3 in range(pos2, len(k) + 1):
+                            if new_name[pos2:pos3] in search_from:
+                                return search_from[new_name[pos2:pos3]]
     return None
 
 
 def match_baidu(fn):
     with open(fn, 'r') as f:
         dct = json.loads(f.read())
-
-    key = 'UKG1G71ttFxlVRwOqCrllVXLfRs4MegB'
-    url = 'https://api.map.baidu.com/place/v2/suggestion?'
-    param = {'query': '', 'region': '', 'output': 'json', 'ak': key}
-    dirs = ['mid/', 'high/']
+    dirs = ['mid', 'high']
     for i in dirs:
         for j in os.listdir(os.path.join(path, i)):
-            with open(i + j, 'r', encoding='UTF-8-sig') as f:
-                contents = f.read().split()
-                temp = []
-                for k in contents:
-                    time.sleep(0.5)
-                    a, b = helper3(k, dct)
-                    param['region'] = a
-                    param['query'] = b
-                    req = requests.get(url, params=param)
-                    req.encoding = 'utf-8'
-                    res = req.json()
-                    temp.append(k)
-                if temp:
-                    print(j)
-                    print('\n'.join(temp))
+            with open(os.path.join(path, i, j), 'r', encoding='UTF-8-sig') as f:
+                with open(os.path.join(path, i + '_code', j), 'w', encoding='utf-8') as f_out:
+                    contents = f.read().split()
+                    for k in contents:
+                        temp = list(jieba.cut(k))
+                        if temp[0][-1] == '市':
+                            spl = 2
+                        else:
+                            spl = 3
+                        region, query = ''.join(temp[:spl]), ''.join(temp[3:6])
+                        res = req(region, query).json()['result']
+                        try:
+                            adcode = res[0]['adcode']
+                            f_out.write(adcode + '\n')
+                        except:
+                            try:
+                                result = helper2(k, dct)
+                                f_out.write(result + '\n')
+                            except:
+                                print(i + '/' + j)
+                                print(k)
 
 
 if __name__ == '__main__':
@@ -393,7 +357,7 @@ if __name__ == '__main__':
     # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
     # create_embedded_location_list()
-    match2('areas.json')
+    # match2('areas.json')
     # match('cities.json')
     # precise_list()
-    # match_baidu('areas.json')
+    match_baidu('areas.json')
