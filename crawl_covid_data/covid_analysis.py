@@ -1,3 +1,4 @@
+import time
 from xml.parsers.expat import ExpatError
 
 import requests
@@ -232,16 +233,37 @@ def crawl2():
     print(url_pic)
 
 
+suffix_lvl1 = ['省', '自治区', '市']
+
+
 def precise_list():
-    url = "http://www.ip33.com/area_code.html"
+    # url = "http://www.ip33.com/area_code.html"
+    url = 'http://www.ip33.com/area/2019.html'
     req = requests.get(url)
     req.encoding = 'utf-8'
     html = req.text.replace('&', '')
     json_ = xmltojson.parse(html)
     x = json.loads(json_)
     y = x['html']['body']['div'][1]['div']
-    y = y[1:]
-    y = {i['h4'].split()[0]: {j['h5'].split()[0]: j['ul'] for j in i['ul']['li']} for i in y}
+    y = y[2:]
+    abc = {}
+    for i in y:
+        name = i['h4'].split()[0]
+        for m in suffix_lvl1:
+            name = name.replace(m, '')
+        temp = {}
+        if type(i['ul']['li']) == list:
+            for j in i['ul']['li']:
+                if j['ul']:
+                    temp[j['h5'].split()[0]] = {'li': j['ul']['li']}
+                else:
+                    temp[j['h5'].split()[0]] = {'li': []}
+        else:
+            for j in i['ul']:
+                temp[i['ul'][j]['h5'].split()[0]] = i['ul'][j]['ul']
+        abc[name] = temp
+    y = abc
+    # y = {i['h4'].split()[0]: {j['h5'].split()[0]: j['ul'] for j in i['ul']['li']} for i in y}
     for i in y.values():
         for j in i:
             if not i[j]:
@@ -259,24 +281,31 @@ def precise_list():
         json.dump(y, f, ensure_ascii=False)
 
 
+exception_list = ['广东省东莞市', '广东省中山市']
+
+
 def helper2(k, dct):
     flag = False
+    if k[:6] in exception_list:
+        return True
     for pos, char in enumerate(k):
         if flag:
             break
         if k[:pos] in dct:
             flag = True
             province = k[:pos]
-            if k[:pos] in dam:
-                pos2 = pos
-                to_search = [j for i in dct[province] for j in i]
+            new_name = renew_name(k[pos:])[0]
+            if province in dam:
+                pos2 = 0
+                to_search = [j for i in dct[province] for j in dct[province][i]]
+                break
             else:
-                for pos2 in range(pos + 2, len(k) + 1):
-                    temp = k[pos + 1:pos2]
+                for pos2 in range(1, len(k) + 1):
+                    temp = new_name[:pos2]
                     if temp in dct[province]:
                         to_search = dct[province][temp]
                         break
-    return any(k[pos2:pos3] in to_search for pos3 in range(pos2 + 1, len(k) + 1))
+    return any(new_name[pos2:pos3] in to_search for pos3 in range(pos2 + 1, len(k) + 1))
 
 
 def match2(fn):
@@ -296,6 +325,68 @@ def match2(fn):
                     print('\n'.join(temp))
 
 
+def renew_name(s):
+    for pos in range(len(s)):
+        if s[:pos] in suffix_lvl1:
+            return s[pos:],s[:pos]
+    return s,''
+
+
+def helper3(k, dct):
+    flag = False
+    # if k[:6] in exception_list:
+    #     return True
+    for pos, char in enumerate(k):
+        if flag:
+            break
+        if k[:pos] in dct:
+            flag = True
+            province = k[:pos]
+            new_name, province_name = renew_name(k[pos:])
+            if province in dam:
+                for pos2 in range(1, len(new_name)):
+                    district = new_name[:pos2]
+                    search_from = [j for i in dct[province] for j in dct[province][i]]
+                    if district in search_from:
+                        return province + province_name + district, new_name[pos2:]
+            else:
+                for pos2 in range(1, len(k) + 1):
+                    temp = new_name[:pos2]
+                    if temp in dct[province]:
+                        # search_from = dct[province][temp]
+                        # for pos3 in range(pos2, len(k) + 1):
+                        # if new_name[pos2:pos3] in search_from:
+                        return province + province_name + new_name[:pos2], new_name[pos2:]
+    return None
+
+
+def match_baidu(fn):
+    with open(fn, 'r') as f:
+        dct = json.loads(f.read())
+
+    key = 'UKG1G71ttFxlVRwOqCrllVXLfRs4MegB'
+    url = 'https://api.map.baidu.com/place/v2/suggestion?'
+    param = {'query': '', 'region': '', 'output': 'json', 'ak': key}
+    dirs = ['mid/', 'high/']
+    for i in dirs:
+        for j in os.listdir(os.path.join(path, i)):
+            with open(i + j, 'r', encoding='UTF-8-sig') as f:
+                contents = f.read().split()
+                temp = []
+                for k in contents:
+                    time.sleep(0.5)
+                    a, b = helper3(k, dct)
+                    param['region'] = a
+                    param['query'] = b
+                    req = requests.get(url, params=param)
+                    req.encoding = 'utf-8'
+                    res = req.json()
+                    temp.append(k)
+                if temp:
+                    print(j)
+                    print('\n'.join(temp))
+
+
 if __name__ == '__main__':
     # crawl()
     # crawl2()
@@ -305,3 +396,4 @@ if __name__ == '__main__':
     match2('areas.json')
     # match('cities.json')
     # precise_list()
+    # match_baidu('areas.json')
