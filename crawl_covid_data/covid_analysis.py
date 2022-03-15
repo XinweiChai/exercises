@@ -1,5 +1,4 @@
 import time
-from xml.parsers.expat import ExpatError
 
 import requests
 import re
@@ -17,6 +16,7 @@ os.chdir(path)
 
 # Direct_administered_municipalities
 dam = ('北京市', '天津市', '上海市', '重庆市')
+exceptions = {'广东省东莞市': '441900', '广东省中山市': '442000'}
 
 
 def page_with_pics(keyword):
@@ -53,9 +53,6 @@ def page_with_pics(keyword):
 def reorganize():
     directory = 'dat/'
     for i in os.listdir(directory):
-        date = i.split('.')[0]
-        if i == '20210816.txt':
-            c = 1
         with open(directory + i, 'r', encoding='UTF-8-sig') as f:
             contents = f.read().split()
             flag = 0
@@ -131,74 +128,13 @@ class Crawl_page:
         self.saveFile(self.getContent(url))
 
 
-def create_embedded_location_list():
-    req = requests.get('http://www.ip33.com/area_code.html')
-    soup = BeautifulSoup(req.content, 'html.parser')
-    content = soup.select('.ip')
-    x = soup.div['ip']
-    cities = [i.get_text().strip() for i in content]
-    res = {}
-    for i in cities:
-        temp = re.split(r'\n+', i)
-        loc = {}
-        for j in temp[1:]:
-            location, code = j.split()
-            loc[location] = code
-        prov, prov_code = temp[0].split()
-        res[prov] = loc
-        with open('cities.json', 'w', encoding='utf-8') as f:
-            f.write(json.dumps(res, ensure_ascii=False))
-
-
-def helper(k, dct):
-    for pos in range(1, len(k) + 1):
-        if k[:pos] in dct:
-            province = k[:pos]
-            if k[pos] in ['市', '省']:
-                pos += 1
-            # for pos2 in range(pos + 2, len(k) + 1):
-            for pos2 in range(len(k), pos + 1, -1):
-                # for ele in dct[province]:
-                #     if k[pos:pos2] in ele:
-                #         return True
-                if k[pos:pos2] in dct[province]:
-                    return True
-    return False
-
-
-def match(fn):
-    with open(fn, 'r') as f:
-        dct = json.loads(f.read())
-    dirs = ['mid/', 'high/']
-    # dirs = ['dat/']
-    for i in dirs:
-        for j in os.listdir(os.path.join(path, i)):
-            # try:
-            with open(i + j, 'r', encoding='UTF-8-sig') as f:
-                contents = f.read().split()
-                temp = []
-                for k in contents:
-                    # if k not in ['高风险地区：', '暂无', '中风险地区：'] and not helper(k, dct):
-                    if not helper(k, dct):
-                        temp.append(k)
-                if temp:
-                    print(j)
-                    print('\n'.join(temp))
-            # except UnicodeDecodeError:
-            #     f.close()
-            #     with open(i + j, 'r', encoding='gbk') as f:
-            #         contents = f.read()
-            #     with open(i + j, 'w', encoding='utf-8') as f:
-            #         f.write(contents)
-
-
-def crawl():
+def crawl(keyword):
     x = []
-    json = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": "全国疫情中高风险地区", "page": 1, "position": "title",
-            "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "smart"}
+    params = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": keyword, "page": 1, "position": "title",
+              "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "smart"}
     for i in range(1, 15):
-        json['page'] = i
-        response = requests.post(search_url, json=json)
+        params['page'] = i
+        response = requests.post(search_url, json=params)
         res = response.json()
         for j in res['data']['news']['list']:
             x.append(j['url'])
@@ -210,27 +146,6 @@ def crawl():
         for i in x:
             print(i)
             Crawl_page().overall(i)
-    print(url_pic)
-
-
-def crawl2():
-    x = []
-    json = {"gdbsDivision": "440000", "gdbsOrgNum": "0", "keywords": "最新疫情风险等级提醒", "page": 1, "position": "title",
-            "range": "site", "recommand": 1, "service_area": 1, "site_id": "162", "sort": "time"}
-    for i in range(1, 13):
-        json['page'] = i
-        response = requests.post(search_url, json=json)
-        res = response.json()
-        for j in res['data']['news']['list']:
-            x.append(j['url'])
-    with open('urls.txt', 'w') as f:
-        for i in x:
-            f.writelines(i + '\n')
-    # with open('urls.txt', 'r') as f:
-    #     x = f.read().split('\n')
-    #     for i in x:
-    #         print(i)
-    #         Crawl_page().overall(i)
     print(url_pic)
 
 
@@ -292,72 +207,69 @@ def renew_name(s):
 def req(region, query):
     key = 'UKG1G71ttFxlVRwOqCrllVXLfRs4MegB'
     url = 'https://api.map.baidu.com/place/v2/suggestion?'
-    param = {'query': query, 'region': region, 'output': 'json', 'ak': key}
-    return requests.get(url=url, params=param)
+    params = {'query': query, 'region': region, 'output': 'json', 'ak': key}
+    return requests.get(url=url, params=params).json()['result']
 
 
-def helper2(k, dct):
-    flag = False
-    for pos, char in enumerate(k):
-        if flag:
-            break
-        if k[:pos] in dct:
-            flag = True
-            province = k[:pos]
-            new_name, province_name = renew_name(k[pos:])
-            if province in dam:
-                for pos2 in range(1, len(new_name)):
-                    district = new_name[:pos2]
-                    for i in dct[province]:
-                        if district in dct[province][i]:
-                            return dct[province][i][district]
-            else:
-                for pos2 in range(1, len(k) + 1):
-                    temp = new_name[:pos2]
-                    if temp in dct[province]:
-                        search_from = dct[province][temp]
-                        for pos3 in range(pos2, len(k) + 1):
-                            if new_name[pos2:pos3] in search_from:
-                                return search_from[new_name[pos2:pos3]]
-    return None
+def helper(k, dct, spl):
+    if k[:6] in exceptions:
+        return exceptions[k[:6]]
+    for i in range(spl):
+        for pos in range(1, len(k) + 1):
+            try:
+                if k[:pos] in dct:
+                    dct = dct[k[:pos]]
+                    k = k[pos:]
+                    break
+            except KeyError:
+                raise
+    return dct
 
 
 def match_baidu(fn):
     with open(fn, 'r') as f:
         dct = json.loads(f.read())
     dirs = ['mid', 'high']
+    cnt = 0
+    cnt_baidu = 0
     for i in dirs:
         for j in os.listdir(os.path.join(path, i)):
             with open(os.path.join(path, i, j), 'r', encoding='UTF-8-sig') as f:
-                with open(os.path.join(path, i + '_code', j), 'w', encoding='utf-8') as f_out:
-                    contents = f.read().split()
-                    for k in contents:
+                contents = f.read().split()
+            with open(os.path.join(path, i + '_code', j), 'w', encoding='utf-8') as f_out:
+                for k in contents:
+                    splits = 2 if k[:3] in dam else 3
+                    try:
+                        result = helper(k, dct, splits)
+                        f_out.write(result + '\n')
+                    except (KeyError, TypeError):
                         temp = list(jieba.cut(k))
-                        if temp[0][-1] == '市':
-                            spl = 2
-                        else:
-                            spl = 3
-                        region, query = ''.join(temp[:spl]), ''.join(temp[3:6])
-                        res = req(region, query).json()['result']
+                        province, city = temp[0:2]
+                        region, query = ''.join(temp[:splits - 1]), ''.join(temp[splits - 1:6])
+                        time.sleep(0.1)
+                        res = req(region, query)
                         try:
-                            adcode = res[0]['adcode']
-                            f_out.write(adcode + '\n')
-                        except:
-                            try:
-                                result = helper2(k, dct)
-                                f_out.write(result + '\n')
-                            except:
-                                print(i + '/' + j)
-                                print(k)
+                            for cand in res:
+                                if cand['province'] == province and cand['city'] == city:
+                                    adcode = cand['adcode']
+                                    f_out.write(adcode + '\n')
+                                    cnt_baidu += 1
+                                    break
+                            else:
+                                raise KeyError
+                        except (IndexError, KeyError):
+                            print(i + '/' + j)
+                            print(k)
+                        cnt += 1
+    print(cnt)
+    print(cnt_baidu)
 
 
 if __name__ == '__main__':
-    # crawl()
-    # crawl2()
+    # keywords = ["全国疫情中高风险地区", "最新疫情风险等级提醒"]
+    # for i in keywords:
+    #     crawl(i)
     # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
-    # create_embedded_location_list()
-    # match2('areas.json')
-    # match('cities.json')
     # precise_list()
-    match_baidu('areas.json')
+    match_baidu('areas2.json')
