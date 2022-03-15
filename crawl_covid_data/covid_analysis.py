@@ -152,51 +152,6 @@ def crawl(keyword):
 suffix_lvl1 = ['省', '自治区', '市']
 
 
-def precise_list():
-    # url = "http://www.ip33.com/area_code.html"
-    url = 'http://www.ip33.com/area/2019.html'
-    req = requests.get(url)
-    req.encoding = 'utf-8'
-    html = req.text.replace('&', '')
-    json_ = xmltojson.parse(html)
-    x = json.loads(json_)
-    y = x['html']['body']['div'][1]['div']
-    y = y[2:]
-    abc = {}
-    for i in y:
-        name = i['h4'].split()[0]
-        # for m in suffix_lvl1:
-        #     name = name.replace(m, '')
-        temp = {}
-        if type(i['ul']['li']) == list:
-            for j in i['ul']['li']:
-                if j['ul']:
-                    temp[j['h5'].split()[0]] = {'li': j['ul']['li']}
-                else:
-                    temp[j['h5'].split()[0]] = {'li': []}
-        else:
-            for j in i['ul']:
-                temp[i['ul'][j]['h5'].split()[0]] = i['ul'][j]['ul']
-        abc[name] = temp
-    y = abc
-    # y = {i['h4'].split()[0]: {j['h5'].split()[0]: j['ul'] for j in i['ul']['li']} for i in y}
-    for i in y.values():
-        for j in i:
-            if not i[j]:
-                i[j] = {}
-            else:
-                cur = i[j]['li']
-                if type(cur) == list:
-                    for k in cur:
-                        temp = k.split()
-                        i[j][temp[0]] = temp[1]
-                else:
-                    i[j][cur.split()[0]] = cur.split()[1]
-                i[j].pop('li')
-    with open('areas.json', 'w') as f:
-        json.dump(y, f, ensure_ascii=False)
-
-
 def renew_name(s):
     for pos in range(len(s)):
         if s[:pos] in suffix_lvl1:
@@ -265,11 +220,56 @@ def match_baidu(fn):
     print(cnt_baidu)
 
 
+def helper_dic(ul, skip):
+    if skip:
+        uls = ul.find_all('ul')
+        temp = {}
+        for i in uls:
+            temp.update(dictify(i))
+        return temp
+    else:
+        return dictify(ul)
+
+
+def dictify(ul):
+    result = {}
+    for li in ul.find_all("li", recursive=False):
+        key = next(li.stripped_strings)
+        ul = li.find("ul")
+        if ul:
+            result[key.split()[0]] = dictify(ul)
+        else:
+            key = key.split()
+            result[key[0]] = key[1]
+    return result
+
+
+def precise_list():
+    # url = "http://www.ip33.com/area_code.html"
+    url = 'http://www.ip33.com/area/2019.html'
+    req = requests.get(url)
+    req.encoding = 'utf-8'
+    xml = req.text.replace('&', '')
+    soup = BeautifulSoup(xml, "html.parser")
+    # test = soup.find_all('div', {"class": "ip"})
+    test = soup.find_all('div', class_="ip")
+    test.pop(0)
+    res = {}
+    for x in test:
+        province = x.find('h4').text.split()[0]
+        res[province] = helper_dic(x.find('ul'), province in dam)
+    # Exceptions
+    res["广东省"]["东莞市"] = "441900"
+    res["广东省"]["中山市"] = "442000"
+    with open('areas3.json', 'w') as f:
+        json.dump(res, f, ensure_ascii=False)
+
+
 if __name__ == '__main__':
     # keywords = ["全国疫情中高风险地区", "最新疫情风险等级提醒"]
     # for i in keywords:
     #     crawl(i)
     # page_with_pics("最新疫情风险等级提醒")
     # reorganize()
-    # precise_list()
-    match_baidu('areas2.json')
+    # match_baidu('areas2.json')
+    precise_list()
