@@ -44,10 +44,26 @@ def remove_image(fn):
             output.write(outputStream)
 
 
+def decompose_pdf(fn):
+    with open(fn, 'rb') as inF:
+        src = PyPDF2.PdfFileReader(inF)
+        for i in range(src.getNumPages()):
+            with open(f'dst{i:02d}.pdf', 'wb') as outF:
+                out = PyPDF2.PdfFileWriter()
+                out.addPage(src.getPage(i))
+                out.write(outF)
+
+
+def assembly_pdf():
+    os.system('pdftk dst*.pdf cat output res.pdf')
+
+
 if __name__ == '__main__':
     # directory = sys.argv[1] if len(sys.argv) > 1 else '.'
     # f2 = "Spatio-temporal Clustering and Forecasting Method for Free-Floating Bike Sharing Systems"
     # modify_metadata('123.pdf', f2)
     # rename_pdf(directory)
-    rename_pdf('.')
+    # rename_pdf('.')
     # remove_image("TEF-Canada-Expression-Orale-150-Topics.pdf")
+    decompose_pdf('租房合同.pdf')
+    # assembly_pdf()
