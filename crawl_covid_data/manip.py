@@ -2,54 +2,90 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import numpy as np
-from pandas.tseries.offsets import MonthEnd
+from pandas.tseries.offsets import MonthEnd, MonthBegin
 
+date_formats = ['%Y-%m-%d', '%m/%d/%Y']
 
-# date_parser = lambda dat: datetime.strptime(dat, '%m/%d/%Y')
 
 def date_parser(dat):
-    return datetime.strptime(dat, '%m/%d/%Y')
+    return datetime.strptime(dat, date_formats[0])
 
 
-def daterange(start_date, end_date):
-    for n in range(int((end_date - start_date).days)):
+def date_parser2(dat):
+    return datetime.strptime(dat, date_formats[1])
+
+
+def daterange(start_date, end_date, step):
+    for n in range(int((end_date - start_date).days), step):
         yield start_date + relativedelta(days=n)
 
 
 def monthrange(start_date, end_date):
-    for n in range(int((end_date - start_date).months)):
+    for n in range(diff_months(start_date, end_date)):
         yield start_date + relativedelta(months=n)
 
 
-start = datetime.strptime('2020-01-26', '%Y-%m-%d')
-end = datetime.strptime('2022-03-05', '%Y-%m-%d')
-
-# x = pd.read_csv('confirmed.csv', parse_dates=['time'], date_parser=date_parser)
-# x['yearmonth'] = x['time'].dt.strftime('%Y-%m')
+def diff_months(start_date, end_date):
+    return (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
 
 
-# x = x[['city_zipCode', 'yearmonth', 'confirmed']]
-# cols = list(x.columns)
-# cols.remove('confirmed')
-# y = x.groupby(cols).sum()
-# y.to_csv('res.csv')
-#
-y = pd.read_csv('res.csv', parse_dates=['yearmonth'])
-# y['has_confirmed'] = np.where(y['confirmed'] == 0, 0, 1)
-# y['continue_confirmed'] = 0
-#
-# x = x[['city_zipCode', 'yearmonth', 'time', 'confirmed']]
-# z = x[(x['time'] == x['time'] + MonthEnd(0))]
-# z.to_csv('z.csv', index=False)
-#
-# z = pd.read_csv('z.csv', parse_dates=['yearmonth'])
-# y = y.join(z, on='yearmonth')
-# aaa = 1
-# for i in monthrange(start_date=start, end_date=end):
-# y['continue_confirmed'] = np.where(
-# (z['confirmed'] == 0) & (z['time'] == pd.to_datetime(y['yearmonth'], format="%Y-%m") + MonthEnd(1)), 0, 1)
-# (x['time'].dt.year == y['time'].dt.year) & (x['time'].dt.month == y['time'].dt.month) & x['time'].dt.day==)
-# y.to_csv('res2.csv')
-# x = x[['provinceName', 'provinceEnglishName', 'province_zipCode', 'time', 'confirmed']]
+start = datetime.strptime('2020-01-26', date_formats[0])
+end = datetime.strptime('2022-03-05', date_formats[0])
 
-# for i in daterange(start_date=start, end_date=end):
+
+def optimize_dataset():
+    x = pd.read_csv('confirmed.csv', parse_dates=['time'], date_parser=date_parser2)
+    x[['city_zipCode', 'city_confirmedCount', 'city_suspectedCount', 'city_curedCount', 'city_deadCount', 'time',
+       'confirmed']].to_csv('confirmed_city.csv', index=False)
+    x[['provinceName', 'provinceEnglishName', 'province_zipCode', 'cityName', 'city_zipCode']].drop_duplicates().to_csv(
+        'city_data.csv', index=False)
+
+
+def generate_yearmonth_aggregated_confirmed_data():
+    x = pd.read_csv('confirmed_city.csv', parse_dates=['time'], date_parser=date_parser)
+    x['yearmonth'] = x['time'].dt.strftime('%Y-%m')
+    x = x[['city_zipCode', 'yearmonth', 'confirmed']]
+    cols = list(x.columns)
+    cols.remove('confirmed')
+    y = x.groupby(cols).sum()
+    y.to_csv('res.csv')
+
+
+def generate_dummies():
+    x = pd.read_csv('confirmed_city.csv', parse_dates=['time'], date_parser=date_parser)
+    x.set_index(['time', 'city_zipCode'])
+    y = pd.read_csv('res.csv', parse_dates=['yearmonth'])
+    y['has_confirmed'] = np.where(y['confirmed'] == 0, 0, 1)
+    y['continue_unconfirmed'] = 30
+    y['continue_unconfirmed_dummy'] = 0
+    y['continue_unconfirmed_last_month'] = 30
+    y['continue_unconfirmed_last_month_dummy'] = 0
+
+    for i in monthrange(start_date=start, end_date=end):
+        start_m = i - MonthBegin()
+        end_m = i + MonthEnd()
+        t = y[y.yearmonth == start_m]
+        for _, row in t.iterrows():
+            if row.has_confirmed != 0:
+                city_code = row.city_zipCode
+                temp = x[(x.city_zipCode == city_code) & (x['time'] - MonthBegin() == row.yearmonth)]
+                for j in range((end_m - start_m).days):
+                    date = end_m - relativedelta(days=j)
+                    t2 = temp[(city_code == temp.city_zipCode) & (date == temp.time) & (temp.confirmed != 0)]
+                    if not t2.empty:
+                        y.loc[(y.city_zipCode == city_code) & (y.yearmonth == start_m), 'continue_unconfirmed'] = j
+                        y.loc[
+                            (y.city_zipCode == city_code) & (y.yearmonth == start_m), 'continue_unconfirmed_dummy'] = 1
+                        next_month = start_m + relativedelta(months=1)
+                        y.loc[(y.city_zipCode == city_code) & (
+                                y.yearmonth == next_month), 'continue_unconfirmed_last_month'] = j
+                        y.loc[(y.city_zipCode == city_code) & (
+                                y.yearmonth == next_month), 'continue_unconfirmed_last_month_dummy'] = 1
+                        break
+    y.to_csv('res2.csv', index=False)
+
+
+if __name__ == '__main__':
+    # optimize_dataset()
+    # generate_yearmonth_aggregated_confirmed_data()
+    generate_dummies()
