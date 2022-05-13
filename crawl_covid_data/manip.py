@@ -85,7 +85,64 @@ def generate_dummies():
     y.to_csv('res2.csv', index=False)
 
 
+def generate_dummies2():
+    x = pd.read_csv('confirmed_city.csv', parse_dates=['time'], date_parser=date_parser)
+    x['city_code'] = x['city_zipCode'] // 100
+    x['yearmonth'] = x['time'] - MonthBegin()
+    x = x[['city_code', 'yearmonth', 'time', 'confirmed']].groupby(['city_code', 'yearmonth', 'time'],
+                                                                   as_index=False).sum()
+    x.set_index(['time', 'city_code'])
+    y = x[['city_code', 'yearmonth', 'confirmed']]
+    cols = list(y.columns)
+    cols.remove('confirmed')
+    y = y.groupby(cols, as_index=False).sum()
+    y['has_confirmed'] = np.where(y['confirmed'] == 0, 0, 1)
+    y['continue_unconfirmed'] = 30
+    y['continue_unconfirmed_dummy'] = 0
+    y['continue_unconfirmed_last_month'] = 30
+    y['continue_unconfirmed_last_month_dummy'] = 0
+
+    for i in monthrange(start_date=start, end_date=end):
+        start_m = i - MonthBegin()
+        end_m = i + MonthEnd()
+        t = y[y.yearmonth == start_m]
+        for _, row in t.iterrows():
+            if row.has_confirmed != 0:
+                city_code = row.city_code
+                temp = x[(x.city_code == city_code) & (x['time'] - MonthBegin() == row.yearmonth)]
+                for j in range((end_m - start_m).days):
+                    date = end_m - relativedelta(days=j)
+                    t2 = temp[(city_code == temp.city_code) & (date == temp.time) & (temp.confirmed != 0)]
+                    if not t2.empty:
+                        y.loc[(y.city_code == city_code) & (y.yearmonth == start_m), 'continue_unconfirmed'] = j
+                        y.loc[
+                            (y.city_code == city_code) & (y.yearmonth == start_m), 'continue_unconfirmed_dummy'] = 1
+                        next_month = start_m + relativedelta(months=1)
+                        y.loc[(y.city_code == city_code) & (
+                                y.yearmonth == next_month), 'continue_unconfirmed_last_month'] = j
+                        y.loc[(y.city_code == city_code) & (
+                                y.yearmonth == next_month), 'continue_unconfirmed_last_month_dummy'] = 1
+                        break
+    y.to_csv('res2.csv', index=False)
+
+
+def aa():
+    import statsmodels.api as sm
+    nsample = 100
+    x = np.linspace(0, 10, nsample)
+    X = sm.add_constant(x)
+    beta = np.array([1, 10])
+    e = np.random.normal(size=nsample)
+    y = np.dot(X, beta) + e
+    model = sm.OLS(y, X)
+    results = model.fit()
+    print(results.summary())
+    print(results.params)
+
+
 if __name__ == '__main__':
     # optimize_dataset()
     # generate_yearmonth_aggregated_confirmed_data()
-    generate_dummies()
+    # generate_dummies()
+    # generate_dummies2()
+    aa()

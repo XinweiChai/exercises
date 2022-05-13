@@ -45,7 +45,7 @@ request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic"
 # 以二进制方式打开图文件
 # 参数image：图像base64编码
 # 下面图片路径请自行切换为自己环境的绝对路径
-with open("test2.png", "rb") as f:
+with open("xierqi_coordinate.png", "rb") as f:
 	image = base64.b64encode(f.read())
 
 body = {
