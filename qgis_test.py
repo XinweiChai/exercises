@@ -16,7 +16,7 @@ base_dir = home + 'base/'
 
 def output_map(area_name):
     p = QgsProject.instance()
-    p.read('/home/chai/geohash4.qgz')
+    p.read('/home/chai/geohash5.qgz')
 
     manager = p.layoutManager()
     layoutName = 'out'
@@ -56,11 +56,12 @@ def output_map(area_name):
 
         # base_path = os.path.join(p.homePath())
         if name == 'Amap':
-            pdf_path = os.path.join(base_dir, 'base_' + f'{area_name}.pdf')
+            pass
+            # pdf_path = os.path.join(base_dir, 'base_' + f'{area_name}.pdf')
         else:
             pdf_path = os.path.join(directory + area_name, f"{name}.pdf")
 
-        exporter.exportToPdf(pdf_path, QgsLayoutExporter.PdfExportSettings())
+            exporter.exportToPdf(pdf_path, QgsLayoutExporter.PdfExportSettings())
         p.layerTreeRoot().findLayer(layer).setItemVisibilityChecked(False)
 
 
