@@ -16,7 +16,7 @@ base_dir = home + 'base/'
 
 def output_map(area_name):
     p = QgsProject.instance()
-    p.read('/home/chai/geohash5.qgz')
+    p.read('/home/chai/geohash4.qgz')
 
     manager = p.layoutManager()
     layoutName = 'out'
@@ -26,12 +26,18 @@ def output_map(area_name):
             manager.removeLayout(i)
     layout = QgsPrintLayout(p)
     layout.initializeDefaults()
-
-    # pc = layout.pageCollection()
-    # pc.pages()[0].setPageSize('A4', QgsLayoutItemPage.Orientation.Landscape)
-
     layout.setName(layoutName)
     manager.addLayout(layout)
+    # for layout in layouts_list:
+    #     if layout.name() == layoutName:
+    #         manager.addLayout(layout)
+
+    # page settings
+    pc = layout.pageCollection()
+    # QgsLayoutItemPage.setOpacity()
+    pc.pages()[0].setBackgroundEnabled(False)
+    pc.pages()[0].setOpacity(0)
+    # pc.pages()[0].setPageSize('A4', QgsLayoutItemPage.Orientation.Landscape)
 
     map_l = QgsLayoutItemMap(layout)
     map_l.setRect(2, 2, 2, 2)
@@ -42,6 +48,10 @@ def output_map(area_name):
     rect.scale(1.0)
     # ms.setExtent(rect)
     map_l.setExtent(rect)
+    map_l.setOpacity(0.7)
+
+    # Make background transparent
+    map_l.setBackgroundEnabled(False)
     layout.addLayoutItem(map_l)
 
     Path(directory + area_name).mkdir(parents=True, exist_ok=True)
@@ -126,5 +136,5 @@ if __name__ == '__main__':
     qgs.initQgis()
     for i in areas:
         output_map(i)
-        add_opacity(directory + i)
+        # add_opacity(directory + i)
     qgs.exitQgis()
