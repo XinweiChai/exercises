@@ -4,12 +4,13 @@ import webbrowser
 import requests as rq
 from bs4 import BeautifulSoup
 
-
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36'}
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36'}
 books = []
-
+if not os.path.exists('temp'):
+    os.mkdir('temp')
 with open('C:\\Users\\Lenovo\\Desktop\\book_list.txt', encoding='utf-8') as f:
-    books += f.readlines()
+    books = f.read().splitlines()
 
 sites = {'京东': 'https://search.jd.com/Search?keyword=',
          '当当': 'http://search.dangdang.com/?key=',
@@ -34,32 +35,44 @@ sites = {'京东': 'https://search.jd.com/Search?keyword=',
          }
 
 
-def browsers():
+def browsers(book):
     for i in sites:
-        for book in books:
-            if i == '中国图书网':
-                book = book.encode('unicode_escape').decode().replace('\\', '%')
+        if i == '中国图书网':
+            url = sites[i] + book.encode('unicode_escape').decode().replace('\\', '%')
+        else:
             url = sites[i] + book
-            if i == '苏宁易购':
-                url += '/'
-            webbrowser.open(url, new=2)
+        if i == '苏宁易购':
+            url += '/'
+        webbrowser.open(url, new=2)
 
 
-def post_exception():
-    if not os.path.exists('temp'):
-        os.mkdir('temp')
-    for book in books:
-        res = rq.post('http://www.iisbn.com/search.html', params={'keyword': book})
-        soup = BeautifulSoup(res.content, 'html.parser')
-        lst = soup.find_all('section', class_='bookscats')[0]
-        items = [str(i) + '\n' for i in lst.find_all('h3')]
-        if items:
-            fn = os.path.join('temp', f'{book}.txt')
-            with open(fn, 'w', encoding='utf-8') as f:
-                f.writelines(items)
-            os.system(f'notepad {fn}')
+def post_exception(book):
+    res = rq.post('http://www.iisbn.com/search.html', params={'keyword': book})
+    soup = BeautifulSoup(res.content, 'html.parser')
+    lst = soup.find_all('section', class_='bookscats')[0]
+    items = [str(i) + '\n' for i in lst.find_all('h3')]
+    if items:
+        fn = os.path.join('temp', f'{book}.txt')
+        with open(fn, 'w', encoding='utf-8') as f:
+            f.writelines(items)
+        os.system(f'notepad {fn}')
+
+
+def clear():
+    # for windows
+    if os.name == 'nt':
+        os.system('cls')
+
+    # for mac and linux(here, os.name is 'posix')
+    else:
+        os.system('clear')
 
 
 if __name__ == '__main__':
-    browsers()
-    post_exception()
+    for idx, book in enumerate(books):
+        input(f'To next book {book}, please press Enter')
+        # clear()
+        browsers(book)
+        post_exception(book)
+    if os.name == 'nt':
+        os.system('pause')
