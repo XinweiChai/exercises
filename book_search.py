@@ -18,7 +18,7 @@ sites = {'京东': 'https://search.jd.com/Search?keyword=',
          '孔夫子': 'https://search.kongfz.com/product_result/?key=',
          '有路网': 'https://www.youlu.net/search/result3/?bookName=',
          '多抓鱼': 'https://www.duozhuayu.com/search/book/',
-         # '拼多多': '',
+         '拼多多': 'https://mobile.yangkeduo.com/search_result.html?search_key=',
          # '转转': '',
          '旧书街': 'http://www.jiushujie.com/sell?q=',
          '7788收藏': 'https://www.997788.com/all_0/0/?searchtype=1&www=all&t2=0&s0=',
@@ -26,7 +26,6 @@ sites = {'京东': 'https://search.jd.com/Search?keyword=',
          # '闲鱼': '',
          '中国图书网': 'http://www.bookschina.com/book_find2/?stp=',
          '二手教材网': 'http://so.2sjc.com/search.aspx?q=',
-         # '丁书网': 'http://www.iisbn.com/search.html',
          '布衣书局': 'http://www.booyee.com.cn/searchresult.jsp?bookname=',
          # '渔书': '',
          '典书旧书网': 'https://dianshu.diytrade.com/sdp/2962676/2/pl-7809337/0.html?qs=',
@@ -45,7 +44,7 @@ def browsers(book):
             url += '/'
         webbrowser.open(url, new=2)
 
-
+# 丁书网
 def post_exception(book):
     res = rq.post('http://www.iisbn.com/search.html', params={'keyword': book})
     soup = BeautifulSoup(res.content, 'html.parser')
