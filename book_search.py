@@ -75,3 +75,5 @@ if __name__ == '__main__':
         post_exception(book)
     if os.name == 'nt':
         os.system('pause')
+    if not os.path.getsize('temp'):
+        os.rmdir('temp')
